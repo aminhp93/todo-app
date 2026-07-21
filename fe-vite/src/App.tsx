@@ -31,16 +31,6 @@ const BACKENDS: BackendOption[] = [
     borderColor: 'border-emerald-500/30',
   },
   {
-    id: 'nextjs-api',
-    name: 'Next.js Routes',
-    url: 'http://localhost:5002',
-    framework: 'Next.js App Router (TS)',
-    port: 5002,
-    color: 'text-violet-400',
-    bgColor: 'bg-violet-500/10',
-    borderColor: 'border-violet-500/30',
-  },
-  {
     id: 'nestjs',
     name: 'NestJS',
     url: 'http://localhost:5003',
@@ -180,7 +170,7 @@ export default function App() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {BACKENDS.map((b) => {
               const isSelected = selectedBackend.id === b.id;
               return (

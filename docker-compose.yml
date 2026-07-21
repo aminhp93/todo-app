@@ -31,20 +31,6 @@ services:
     networks:
       - todo-network
 
-  be-nextjs:
-    build: ./be-nextjs
-    container_name: todo-be-next
-    restart: always
-    ports:
-      - "5002:5002"
-    environment:
-      PORT: 5002
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/todo_db
-    depends_on:
-      - db
-    networks:
-      - todo-network
-
   be-nestjs:
     build: ./be-nestjs
     container_name: todo-be-nest

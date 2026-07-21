@@ -15,7 +15,6 @@ graph TD
 
     subgraph Backends
         NodeBE[be-node-express: Port 5001]
-        NextBE[be-nextjs: Port 5002]
         NestBE[be-nestjs: Port 5003]
         FastAPI[be-fastapi: Port 5004]
     end
@@ -23,17 +22,14 @@ graph TD
     DB[(PostgreSQL: Port 5432)]
 
     Vite -->|HTTP REST| NodeBE
-    Vite -->|HTTP REST| NextBE
     Vite -->|HTTP REST| NestBE
     Vite -->|HTTP REST| FastAPI
 
     NextFE -->|HTTP REST| NodeBE
-    NextFE -->|HTTP REST| NextBE
     NextFE -->|HTTP REST| NestBE
     NextFE -->|HTTP REST| FastAPI
 
     NodeBE --> DB
-    NextBE --> DB
     NestBE --> DB
     FastAPI --> DB
 ```
@@ -45,14 +41,13 @@ graph TD
 ```
 todo-app/
 ├── ARCHITECTURE.md          # Tài liệu đặc tả kiến trúc chi tiết
-├── docker-compose.yml       # Orchestration cho Postgres DB, 4 Backends & 2 Frontends
+├── docker-compose.yml       # Orchestration cho Postgres DB, 3 Backends & 2 Frontends
 ├── README.md                # Hướng dẫn chạy và sử dụng
 ├── db/
 │   └── init.sql             # SQL Script tạo bảng todos
 ├── fe-vite/                 # React + Vite + TypeScript (Tailwind CSS)
 ├── fe-nextjs/               # Next.js App Router + TypeScript (Tailwind CSS)
 ├── be-node-express/         # Node.js + Express + TypeScript + pg pool
-├── be-nextjs/               # Next.js App Router Route Handlers (API)
 ├── be-nestjs/               # NestJS + Dependency Injection + pg pool
 └── be-fastapi/              # Python 3.9 FastAPI + Pydantic + psycopg2
 ```
@@ -80,7 +75,7 @@ todo-app/
 
 ## 🔌 API Interface Specifications
 
-Tất cả 4 Backends triển khai cùng một bộ chuẩn RESTful API đồng nhất:
+Tất cả 3 Backends triển khai cùng một bộ chuẩn RESTful API đồng nhất:
 
 | Method | Endpoint | Mô tả | Request Body | Response Format |
 | :--- | :--- | :--- | :--- | :--- |
@@ -99,19 +94,13 @@ Tất cả 4 Backends triển khai cùng một bộ chuẩn RESTful API đồng 
 - **Quản lý DB**: Trực tiếp qua `pg` pool (`new Pool()`).
 - **Ưu điểm**: Nhẹ nhất, ít overhead, dễ đọc, khởi động cực nhanh.
 
-### 2. `be-nextjs` (Next.js App Router API)
-- **Cổng**: `5002`
-- **Mô hình**: Serverless / File-based Route Handlers (`src/app/api/todos/route.ts`).
-- **Quản lý DB**: Singleton `pg` Pool với dev hot-reloading guard.
-- **Ưu điểm**: Phù hợp cho mô hình Fullstack kết hợp hoặc triển khai Serverless.
-
-### 3. `be-nestjs` (NestJS Framework)
+### 2. `be-nestjs` (NestJS Framework)
 - **Cổng**: `5003`
 - **Mô hình**: Enterprise OOP Architecture (Module -> Controller -> Service).
 - **Quản lý DB**: Dependency Injection với lifecycle hooks (`onModuleInit`, `onModuleDestroy`).
 - **Ưu điểm**: Chuẩn hóa dự án lớn, dễ mở rộng và quản lý dependency injection.
 
-### 4. `be-fastapi` (Python 3.9 + FastAPI)
+### 3. `be-fastapi` (Python 3.9 + FastAPI)
 - **Cổng**: `5004`
 - **Mô hình**: Async Python REST Framework sử dụng Pydantic schemas.
 - **Quản lý DB**: `psycopg2` với `RealDictCursor`.

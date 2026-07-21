@@ -1,4 +1,4 @@
-# Multi-Backend Todo App (Vite & Next.js vs. Node, Next.js, NestJS, FastAPI)
+# Multi-Backend Todo App (Vite & Next.js vs. Node Express, NestJS, FastAPI)
 
 Dự án này là mô hình thực tế để so sánh trực quan cấu trúc thư mục, triết lý thiết kế, hiệu năng, và cách viết mã nguồn của các framework phổ biến ở cả Frontend và Backend kết nối chung đến cơ sở dữ liệu **PostgreSQL**.
 
@@ -13,7 +13,6 @@ Dự án này là mô hình thực tế để so sánh trực quan cấu trúc t
 
 ### 2. Backends (Đồng nhất Interface: `GET`, `POST`, `PATCH`, `DELETE` tại `/api/todos`)
 - **be-node-express** (Node.js + Express + pg client): Port `5001`
-- **be-nextjs** (Next.js Route Handlers): Port `5002`
 - **be-nestjs** (NestJS): Port `5003`
 - **be-fastapi** (FastAPI Python): Port `5004`
 
@@ -27,7 +26,7 @@ Dự án này là mô hình thực tế để so sánh trực quan cấu trúc t
 
 ### Cách 1: Sử dụng Docker Compose (Tự động & Đóng gói hoàn toàn)
 
-Để khởi chạy tất cả các dịch vụ (Database, 4 Backends và 2 Frontends) cùng một lúc:
+Để khởi chạy tất cả các dịch vụ (Database, 3 Backends và 2 Frontends) cùng một lúc:
 ```bash
 docker compose up --build
 ```
@@ -47,12 +46,6 @@ Trước khi chạy các Backend/Frontend thủ công, hãy chắc chắn rằng
 - **Node-Express (`be-node-express`)**:
   ```bash
   cd be-node-express
-  npm install
-  npm run dev
-  ```
-- **Next.js API (`be-nextjs`)**:
-  ```bash
-  cd be-nextjs
   npm install
   npm run dev
   ```
@@ -90,6 +83,6 @@ Trước khi chạy các Backend/Frontend thủ công, hãy chắc chắn rằng
 1. Mở trình duyệt truy cập:
    - **Vite Frontend**: [http://localhost:5173](http://localhost:5173)
    - **Next.js Frontend**: [http://localhost:3000](http://localhost:3000)
-2. Ở đầu trang giao diện, có thanh **CHỌN BACKEND API** với 4 tùy chọn tương ứng với các Port `5001` đến `5004`.
+2. Ở đầu trang giao diện, có thanh **CHỌN BACKEND API** với 3 tùy chọn tương ứng với các Port `5001`, `5003`, và `5004`.
 3. Nhấp vào bất kỳ nút nào để chuyển đổi ngay lập tức. Hệ thống sẽ tự động gửi yêu cầu ping/fetch để kiểm tra trạng thái hoạt động của Server đó và hiển thị màu kết nối (Xanh lá - Thành công, Đỏ - Lỗi kết nối).
 4. Bạn có thể thêm, cập nhật trạng thái hoàn thành (toggle), hoặc xóa Todos trên từng server để cảm nhận trực quan tính đồng nhất của dữ liệu thông qua cơ sở dữ liệu Postgres chung.
