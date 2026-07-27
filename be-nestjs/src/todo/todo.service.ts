@@ -21,6 +21,11 @@ export class TodoService implements OnModuleInit, OnModuleDestroy {
     return result.rows;
   }
 
+  async findOne(id: string) {
+    const result = await this.pool.query('SELECT * FROM todos WHERE id = $1', [id]);
+    return result.rows[0] ?? null;
+  }
+
   async create(title: string) {
     const result = await this.pool.query(
       'INSERT INTO todos (title, completed) VALUES ($1, $2) RETURNING *',

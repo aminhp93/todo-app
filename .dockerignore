@@ -1,0 +1,49 @@
+# Git & Repository metadata
+.git
+.gitignore
+.github
+*.md
+
+# Dependencies & Package Managers
+node_modules
+.pnpm-store
+.venv
+env
+venv
+
+# Build Outputs & Cache
+dist
+build
+.next
+out
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# Logs & Database
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pgdata
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore

@@ -1,0 +1,694 @@
+<title>Level 1 — GraphQL Foundation · be-nestjs</title>
+<style>
+  :root {
+    --bg: #eef3f8;
+    --bg-panel: #ffffff;
+    --bg-panel-soft: #f5f8fb;
+    --grid-line: rgba(63,109,149,0.11);
+    --grid-line-strong: rgba(63,109,149,0.20);
+    --ink: #17324f;
+    --ink-dim: #52708c;
+    --ink-faint: #8199b0;
+    --accent: #0e7ea8;
+    --accent-soft: rgba(14,126,168,0.10);
+    --accent2: #b5560f;
+    --accent2-soft: rgba(181,86,15,0.10);
+    --line: #3f6d95;
+    --good: #1f8a5f;
+    --good-soft: rgba(31,138,95,0.10);
+    --card-border: rgba(23,50,79,0.15);
+    --shadow: 0 1px 2px rgba(23,50,79,0.06), 0 8px 24px -12px rgba(23,50,79,0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b2542;
+      --bg-panel: #112d4e;
+      --bg-panel-soft: #0e2946;
+      --grid-line: rgba(255,255,255,0.055);
+      --grid-line-strong: rgba(255,255,255,0.10);
+      --ink: #eaf2fb;
+      --ink-dim: #9fb9d8;
+      --ink-faint: #6e8bab;
+      --accent: #63d6ff;
+      --accent-soft: rgba(99,214,255,0.12);
+      --accent2: #ffb15c;
+      --accent2-soft: rgba(255,177,92,0.12);
+      --line: #5c8ec2;
+      --good: #57d9a3;
+      --good-soft: rgba(87,217,163,0.12);
+      --card-border: rgba(255,255,255,0.13);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b2542;
+    --bg-panel: #112d4e;
+    --bg-panel-soft: #0e2946;
+    --grid-line: rgba(255,255,255,0.055);
+    --grid-line-strong: rgba(255,255,255,0.10);
+    --ink: #eaf2fb;
+    --ink-dim: #9fb9d8;
+    --ink-faint: #6e8bab;
+    --accent: #63d6ff;
+    --accent-soft: rgba(99,214,255,0.12);
+    --accent2: #ffb15c;
+    --accent2-soft: rgba(255,177,92,0.12);
+    --line: #5c8ec2;
+    --good: #57d9a3;
+    --good-soft: rgba(87,217,163,0.12);
+    --card-border: rgba(255,255,255,0.13);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.55);
+  }
+  :root[data-theme="light"] {
+    --bg: #eef3f8;
+    --bg-panel: #ffffff;
+    --bg-panel-soft: #f5f8fb;
+    --grid-line: rgba(63,109,149,0.11);
+    --grid-line-strong: rgba(63,109,149,0.20);
+    --ink: #17324f;
+    --ink-dim: #52708c;
+    --ink-faint: #8199b0;
+    --accent: #0e7ea8;
+    --accent-soft: rgba(14,126,168,0.10);
+    --accent2: #b5560f;
+    --accent2-soft: rgba(181,86,15,0.10);
+    --line: #3f6d95;
+    --good: #1f8a5f;
+    --good-soft: rgba(31,138,95,0.10);
+    --card-border: rgba(23,50,79,0.15);
+    --shadow: 0 1px 2px rgba(23,50,79,0.06), 0 8px 24px -12px rgba(23,50,79,0.18);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 28px),
+      var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  .sheet {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(20px, 4vw, 56px) clamp(16px, 4vw, 40px) 64px;
+  }
+
+  /* ---------- Title block ---------- */
+  .titleblock {
+    border: 1.5px solid var(--grid-line-strong);
+    border-radius: 4px;
+    background: var(--bg-panel);
+    box-shadow: var(--shadow);
+    padding: 22px 26px;
+    margin-bottom: 34px;
+  }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow .dash { color: var(--ink-faint); }
+  h1 {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 34px);
+    letter-spacing: -0.01em;
+    margin: 10px 0 8px;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--ink-dim);
+    font-size: 15px;
+    max-width: 62ch;
+    margin: 0 0 18px;
+    text-wrap: pretty;
+  }
+  .metarow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--grid-line-strong);
+  }
+  .metaitem {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .metaitem .k {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .metaitem .v {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: var(--good-soft);
+    color: var(--good);
+    border: 1px solid currentColor;
+  }
+  .chip .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ---------- Section heading ---------- */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 46px 0 18px;
+  }
+  .section-head h2 {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0;
+    white-space: nowrap;
+  }
+  .section-head .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--grid-line-strong);
+  }
+  .section-note {
+    color: var(--ink-dim);
+    font-size: 14px;
+    margin: -8px 0 20px;
+    max-width: 68ch;
+  }
+
+  /* ---------- Pipeline ---------- */
+  .pipeline-scroll {
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin: 0 -4px;
+  }
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    min-width: max-content;
+    padding: 4px;
+  }
+  .step {
+    width: 168px;
+    flex: 0 0 168px;
+    background: var(--bg-panel);
+    border: 1.5px solid var(--card-border);
+    border-radius: 4px;
+    padding: 14px 14px 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .step .num {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+  .step .title {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .step .body {
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    line-height: 1.45;
+  }
+  .step .code {
+    margin-top: auto;
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    padding: 4px 7px;
+    border-radius: 3px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    align-self: flex-start;
+    word-break: break-word;
+  }
+  .arrow {
+    flex: 0 0 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--line);
+    font-size: 18px;
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  /* ---------- Dual entry diagram ---------- */
+  .dual {
+    background: var(--bg-panel);
+    border: 1.5px solid var(--card-border);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 26px clamp(16px, 3vw, 34px);
+    overflow-x: auto;
+  }
+  .dual-grid {
+    display: grid;
+    grid-template-columns: 152px 32px 152px 32px 176px 32px 152px;
+    grid-template-rows: auto auto;
+    align-items: center;
+    row-gap: 14px;
+    min-width: 780px;
+  }
+  .node {
+    border: 1.5px solid var(--card-border);
+    border-radius: 4px;
+    padding: 11px 13px;
+    background: var(--bg-panel-soft);
+  }
+  .node .lbl {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .node .sub {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 3px;
+  }
+  .node.rest { border-color: color-mix(in srgb, var(--ink-dim) 45%, transparent); }
+  .node.gql { border-color: var(--accent); background: var(--accent-soft); }
+  .node.gql .lbl { color: var(--accent); }
+  .node.shared {
+    grid-row: 1 / 3;
+    background: var(--good-soft);
+    border-color: var(--good);
+  }
+  .node.shared .lbl { color: var(--good); }
+  .node.db { grid-row: 1 / 3; }
+  .connector-h {
+    height: 1.5px;
+    background: var(--line);
+    position: relative;
+  }
+  .connector-h.gql { background: var(--accent); }
+  .connector-h::after {
+    content: "";
+    position: absolute;
+    right: -1px; top: 50%;
+    width: 6px; height: 6px;
+    border-top: 1.5px solid var(--line);
+    border-right: 1.5px solid var(--line);
+    transform: translateY(-50%) rotate(45deg);
+  }
+  .connector-h.gql::after { border-color: var(--accent); }
+  .spacer2 { grid-row: 1 / 3; }
+  .legend {
+    display: flex;
+    gap: 22px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .legend .item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+  .legend .swatch {
+    width: 16px; height: 3px; border-radius: 2px;
+  }
+
+  /* ---------- Concept cards ---------- */
+  .concepts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--bg-panel);
+    border: 1.5px solid var(--card-border);
+    border-radius: 4px;
+    padding: 16px 17px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card .tag {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    align-self: flex-start;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .card .tag.tooling { color: var(--accent2); background: var(--accent2-soft); }
+  .card h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .card p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-dim);
+    line-height: 1.55;
+  }
+  .card .file {
+    margin-top: auto;
+    padding-top: 10px;
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    border-top: 1px dashed var(--grid-line-strong);
+  }
+
+  /* ---------- File map table ---------- */
+  .tablewrap {
+    overflow-x: auto;
+    border: 1.5px solid var(--card-border);
+    border-radius: 4px;
+    background: var(--bg-panel);
+    box-shadow: var(--shadow);
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; }
+  th, td {
+    text-align: left;
+    padding: 11px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--grid-line);
+  }
+  th {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--bg-panel-soft);
+  }
+  td.path {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  td.concept { color: var(--ink-dim); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ---------- Roadmap footer ---------- */
+  .roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .roadmap-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    border: 1.5px dashed var(--grid-line-strong);
+    border-radius: 4px;
+    color: var(--ink-faint);
+  }
+  .roadmap-row .sheetno {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    border: 1px solid var(--grid-line-strong);
+    border-radius: 3px;
+    padding: 2px 7px;
+    flex: 0 0 auto;
+  }
+  .roadmap-row .txt { font-size: 13px; flex: 1; }
+  .roadmap-row .txt b { color: var(--ink-dim); font-weight: 600; }
+  .roadmap-row .lock {
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    flex: 0 0 auto;
+  }
+
+  footer.colophon {
+    margin-top: 44px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--grid-line-strong);
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 640px) {
+    .metarow { gap: 14px 22px; }
+  }
+</style>
+
+<div class="sheet">
+
+  <div class="titleblock">
+    <div class="eyebrow">TODO-APP / BE-NESTJS <span class="dash">—</span> SHEET 01 OF 04</div>
+    <h1>Level 1 — GraphQL Foundation</h1>
+    <p class="subtitle">Schema-first GraphQL chạy song song REST trên cùng NestJS app, dùng chung <span class="mono">TodoService</span> làm business logic. Không có DB hay framework mới — chỉ thêm một lối vào mới cho dữ liệu đã có.</p>
+    <div class="metarow">
+      <div class="metaitem"><span class="k">Stack</span><span class="v">NestJS 10 · Apollo Driver · GraphQL 16</span></div>
+      <div class="metaitem"><span class="k">Endpoint</span><span class="v">POST :5003/graphql</span></div>
+      <div class="metaitem"><span class="k">Approach</span><span class="v">Schema-first (SDL)</span></div>
+      <div class="metaitem"><span class="k">Trạng thái</span><span class="chip"><span class="dot"></span>Đã verify — resolver chain OK</span></div>
+    </div>
+  </div>
+
+  <div class="section-head"><h2>Quy trình — 1 request đi qua đâu</h2><div class="rule"></div></div>
+  <p class="section-note">Từ lúc client gửi query tới lúc nhận JSON, một request GraphQL đi qua 6 trạm sau. So với REST, khác biệt lớn nhất nằm ở trạm 03–04: không có route/method, chỉ có <em>tên field</em>.</p>
+
+  <div class="pipeline-scroll">
+    <div class="pipeline">
+      <div class="step">
+        <div class="num">01</div>
+        <div class="title">Client</div>
+        <div class="body">Apollo Sandbox hoặc curl gửi 1 câu query/mutation dạng string.</div>
+        <div class="code">{ todos { id title } }</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="num">02</div>
+        <div class="title">POST /graphql</div>
+        <div class="body">Luôn cùng 1 endpoint, cùng HTTP verb — khác REST vốn có nhiều route.</div>
+        <div class="code">body: { query }</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="num">03</div>
+        <div class="title">ApolloDriver</div>
+        <div class="body">Parse query, đối chiếu với schema đã nạp từ todo.graphql lúc app khởi động.</div>
+        <div class="code">GraphQLModule</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="num">04</div>
+        <div class="title">Resolver map</div>
+        <div class="body">Tên field trong query khớp với decorator theo tên chuỗi trong resolver.</div>
+        <div class="code">@Query('todos')</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="num">05</div>
+        <div class="title">TodoResolver</div>
+        <div class="body">Gọi TodoService, rồi map kết quả snake_case → camelCase cho đúng schema.</div>
+        <div class="code">toGraphTodo(row)</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="num">06</div>
+        <div class="title">TodoService</div>
+        <div class="body">Business logic dùng chung với REST controller — query pg Pool xuống Postgres.</div>
+        <div class="code">pool.query(...)</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="num">07</div>
+        <div class="title">Response</div>
+        <div class="body">Apollo serialize đúng shape trong schema, trả JSON — luôn kèm HTTP 200.</div>
+        <div class="code">{ "data": {...} }</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-head"><h2>Hai lối vào, một service</h2><div class="rule"></div></div>
+  <p class="section-note">Đây là điểm quan trọng nhất của Level 1: REST và GraphQL không phải hai backend khác nhau — chúng là hai <em>adapter</em> mỏng đứng trước cùng một <span class="mono">TodoService</span>. Không có logic nào bị viết trùng.</p>
+
+  <div class="dual">
+    <div class="dual-grid">
+      <div class="node rest">
+        <div class="lbl">curl / REST client</div>
+        <div class="sub">GET · POST · PATCH · DELETE</div>
+      </div>
+      <div class="connector-h"></div>
+      <div class="node rest">
+        <div class="lbl">TodoController</div>
+        <div class="sub">todo.controller.ts</div>
+      </div>
+      <div class="connector-h"></div>
+      <div class="node shared" style="grid-row:1;">
+        <div class="lbl">TodoService</div>
+        <div class="sub">findAll · findOne · create · update · remove</div>
+      </div>
+      <div class="connector-h" style="grid-row:1;"></div>
+      <div class="node db" style="grid-row:1;">
+        <div class="lbl">PostgreSQL</div>
+        <div class="sub">bảng todos</div>
+      </div>
+
+      <div class="node gql">
+        <div class="lbl">Apollo Sandbox</div>
+        <div class="sub">Query · Mutation</div>
+      </div>
+      <div class="connector-h gql"></div>
+      <div class="node gql">
+        <div class="lbl">TodoResolver</div>
+        <div class="sub">todo.resolver.ts</div>
+      </div>
+      <div class="connector-h gql"></div>
+      <div class="spacer2"></div>
+      <div class="connector-h gql" style="grid-row:2;"></div>
+      <div class="spacer2"></div>
+    </div>
+    <div class="legend">
+      <div class="item"><span class="swatch" style="background:var(--ink-dim)"></span>Đường REST — không đổi từ trước</div>
+      <div class="item"><span class="swatch" style="background:var(--accent)"></span>Đường GraphQL — thêm ở Level 1</div>
+      <div class="item"><span class="swatch" style="background:var(--good)"></span>Điểm dùng chung — không tách code</div>
+    </div>
+  </div>
+
+  <div class="section-head"><h2>Kiến thức nền cần nắm</h2><div class="rule"></div></div>
+  <p class="section-note">8 khái niệm chạm tới trong Level 1 — mỗi cái neo vào đúng file bạn đã viết, không phải lý thuyết suông.</p>
+
+  <div class="concepts">
+    <div class="card">
+      <span class="tag">NestJS core</span>
+      <h3>Module &amp; Dependency Injection</h3>
+      <p>TodoModule khai báo TodoService và TodoResolver là providers. Nest tự inject cùng một TodoService instance vào cả Controller lẫn Resolver — không tạo trùng.</p>
+      <div class="file">todo.module.ts</div>
+    </div>
+    <div class="card">
+      <span class="tag">GraphQL</span>
+      <h3>Schema-first</h3>
+      <p>Hợp đồng API viết trước bằng SDL, độc lập với TypeScript. Nest đọc file này lúc bootstrap rồi khớp field với method resolver theo tên — đúng cách JD của bạn yêu cầu.</p>
+      <div class="file">todo.graphql</div>
+    </div>
+    <div class="card">
+      <span class="tag">GraphQL</span>
+      <h3>Resolver = Controller của GraphQL</h3>
+      <p>@Query('todos') và @Mutation('createTodo') map theo tên chuỗi tới field trong schema — không theo route/HTTP method như REST.</p>
+      <div class="file">todo.resolver.ts</div>
+    </div>
+    <div class="card">
+      <span class="tag tooling">DX / Tooling</span>
+      <h3>ApolloDriver</h3>
+      <p>driver: ApolloDriver bật Apollo Server bên trong Nest. typePaths gom mọi *.graphql thành 1 schema; playground: true mở sandbox thử ngay tại /graphql.</p>
+      <div class="file">app.module.ts</div>
+    </div>
+    <div class="card">
+      <span class="tag tooling">DX / Tooling</span>
+      <h3>Sinh type tự động</h3>
+      <p>definitions.outputAs: 'class' bảo Nest generate graphql.generated.ts khớp 1-1 với schema — gõ kiểu cho resolver mà không viết tay. File này bị gitignore vì là build artifact.</p>
+      <div class="file">graphql.generated.ts</div>
+    </div>
+    <div class="card">
+      <span class="tag">GraphQL</span>
+      <h3>Query vs Mutation</h3>
+      <p>GraphQL không dùng HTTP verb để phân biệt đọc/ghi — tất cả đi qua POST. Query nghĩa là đọc, Mutation là ghi; ranh giới do bạn tự đặt tên trong schema, không phải quy ước cứng.</p>
+      <div class="file">todo.graphql</div>
+    </div>
+    <div class="card">
+      <span class="tag">GraphQL</span>
+      <h3>Client tự chọn field</h3>
+      <p>REST luôn trả nguyên object. GraphQL để client viết { todos { id title } } thì server chỉ trả đúng 2 field — hết over-fetching, đổi lại resolver phải tự map field (created_at → createdAt).</p>
+      <div class="file">todo.resolver.ts — toGraphTodo()</div>
+    </div>
+    <div class="card">
+      <span class="tag">GraphQL</span>
+      <h3>Error luôn HTTP 200</h3>
+      <p>GraphQL trả 200 kèm mảng errors trong body kể cả khi có exception — đã thấy thật khi test lúc Postgres chưa chạy: ECONNREFUSED nằm trong errors[], không phải status 500 như REST.</p>
+      <div class="file">verified qua curl</div>
+    </div>
+  </div>
+
+  <div class="section-head"><h2>Bản đồ file</h2><div class="rule"></div></div>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>File</th><th>Vai trò</th><th>Khái niệm</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="path">src/todo/todo.graphql</td><td>Định nghĩa contract API bằng SDL</td><td class="concept">Schema-first</td></tr>
+        <tr><td class="path">src/todo/todo.resolver.ts</td><td>Nhận operation GraphQL, gọi service, map dữ liệu</td><td class="concept">Resolver</td></tr>
+        <tr><td class="path">src/todo/todo.service.ts</td><td>Business logic + query Postgres — dùng chung REST/GraphQL</td><td class="concept">Shared service layer</td></tr>
+        <tr><td class="path">src/todo/todo.module.ts</td><td>Khai báo DI: Service + Resolver + Controller</td><td class="concept">Module / DI</td></tr>
+        <tr><td class="path">src/app.module.ts</td><td>Cấu hình GraphQLModule: driver, typePaths, playground</td><td class="concept">Bootstrap</td></tr>
+        <tr><td class="path">src/graphql.generated.ts</td><td>Type TypeScript tự sinh từ schema, gitignored</td><td class="concept">Codegen</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head"><h2>Sheet tiếp theo</h2><div class="rule"></div></div>
+  <div class="roadmap">
+    <div class="roadmap-row">
+      <span class="sheetno">SHEET 02</span>
+      <span class="txt"><b>Prisma Migration</b> — thay pg Pool thô trong TodoService bằng Prisma Client + schema.prisma + migration.</span>
+      <span class="lock">chưa mở</span>
+    </div>
+    <div class="roadmap-row">
+      <span class="sheetno">SHEET 03</span>
+      <span class="txt"><b>N+1 &amp; DataLoader</b> — thêm quan hệ Category 1-n với Todo, tạo N+1 thật rồi fix bằng DataLoader.</span>
+      <span class="lock">chưa mở</span>
+    </div>
+    <div class="roadmap-row">
+      <span class="sheetno">SHEET 04</span>
+      <span class="txt"><b>DDD Refactor</b> — tách domain / application / infrastructure / presentation, kèm 1 ADR.md mẫu.</span>
+      <span class="lock">chưa mở</span>
+    </div>
+  </div>
+
+  <footer class="colophon">
+    <span>todo-app · be-nestjs · port 5003</span>
+    <span>2026-07-27</span>
+  </footer>
+
+</div>
