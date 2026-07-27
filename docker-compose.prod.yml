@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: todo-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-todo_db}
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - todo-network
+
+  be-node-express:
+    build:
+      context: ./be-node-express
+      dockerfile: Dockerfile
+    container_name: todo-be-node-prod
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_pass}@db:5432/${POSTGRES_DB:-todo_db}}
+    depends_on:
+      - db
+    networks:
+      - todo-network
+
+  be-nestjs:
+    build:
+      context: ./be-nestjs
+      dockerfile: Dockerfile
+    container_name: todo-be-nest-prod
+    restart: unless-stopped
+    ports:
+      - "5003:5003"
+    environment:
+      NODE_ENV: production
+      PORT: 5003
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_pass}@db:5432/${POSTGRES_DB:-todo_db}}
+    depends_on:
+      - db
+    networks:
+      - todo-network
+
+  be-fastapi:
+    build:
+      context: ./be-fastapi
+      dockerfile: Dockerfile
+    container_name: todo-be-fastapi-prod
+    restart: unless-stopped
+    ports:
+      - "5004:5004"
+    environment:
+      PORT: 5004
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_pass}@db:5432/${POSTGRES_DB:-todo_db}}
+    depends_on:
+      - db
+    networks:
+      - todo-network
+
+  fe-vite:
+    build:
+      context: ./fe-vite
+      dockerfile: Dockerfile
+    container_name: todo-fe-vite-prod
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    networks:
+      - todo-network
+
+  fe-nextjs:
+    build:
+      context: ./fe-nextjs
+      dockerfile: Dockerfile
+    container_name: todo-fe-nextjs-prod
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - todo-network
+
+networks:
+  todo-network:
+    driver: bridge
+
+volumes:
+  pgdata_prod:

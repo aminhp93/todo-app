@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: todo-postgres
+    container_name: todo-postgres-dev
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -12,14 +12,14 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_dev:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - todo-network
 
   be-node-express:
     build: ./be-node-express
-    container_name: todo-be-node
+    container_name: todo-be-node-dev
     restart: always
     ports:
       - "5001:5001"
@@ -33,7 +33,7 @@ services:
 
   be-nestjs:
     build: ./be-nestjs
-    container_name: todo-be-nest
+    container_name: todo-be-nest-dev
     restart: always
     ports:
       - "5003:5003"
@@ -47,7 +47,7 @@ services:
 
   be-fastapi:
     build: ./be-fastapi
-    container_name: todo-be-fastapi
+    container_name: todo-be-fastapi-dev
     restart: always
     ports:
       - "5004:5004"
@@ -61,7 +61,7 @@ services:
 
   fe-vite:
     build: ./fe-vite
-    container_name: todo-fe-vite
+    container_name: todo-fe-vite-dev
     restart: always
     ports:
       - "5173:5173"
@@ -70,7 +70,7 @@ services:
 
   fe-nextjs:
     build: ./fe-nextjs
-    container_name: todo-fe-nextjs
+    container_name: todo-fe-nextjs-dev
     restart: always
     ports:
       - "3000:3000"
@@ -82,4 +82,4 @@ networks:
     driver: bridge
 
 volumes:
-  pgdata:
+  pgdata_dev:

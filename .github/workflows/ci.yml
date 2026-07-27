@@ -1,0 +1,169 @@
+name: Monorepo CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # 1. Backend NestJS
+  be-nestjs:
+    name: Build & Check (be-nestjs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Filter changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            nestjs:
+              - 'be-nestjs/**'
+              - '.github/workflows/ci.yml'
+
+      - name: Setup Node.js
+        if: steps.filter.outputs.nestjs == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies & Build
+        if: steps.filter.outputs.nestjs == 'true'
+        run: |
+          cd be-nestjs
+          npm install
+          npm run build
+
+      - name: Test Docker Build
+        if: steps.filter.outputs.nestjs == 'true'
+        run: |
+          docker build -t todo-be-nestjs ./be-nestjs
+
+  # 2. Backend Node Express
+  be-node-express:
+    name: Build & Check (be-node-express)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Filter changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            express:
+              - 'be-node-express/**'
+              - '.github/workflows/ci.yml'
+
+      - name: Setup Node.js
+        if: steps.filter.outputs.express == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies & Build
+        if: steps.filter.outputs.express == 'true'
+        run: |
+          cd be-node-express
+          npm install
+          npm run build
+
+      - name: Test Docker Build
+        if: steps.filter.outputs.express == 'true'
+        run: |
+          docker build -t todo-be-node-express ./be-node-express
+
+  # 3. Backend FastAPI
+  be-fastapi:
+    name: Build & Check (be-fastapi)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Filter changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            fastapi:
+              - 'be-fastapi/**'
+              - '.github/workflows/ci.yml'
+
+      - name: Setup Python
+        if: steps.filter.outputs.fastapi == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies & Validate Syntax
+        if: steps.filter.outputs.fastapi == 'true'
+        run: |
+          cd be-fastapi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m py_compile main.py
+
+      - name: Test Docker Build
+        if: steps.filter.outputs.fastapi == 'true'
+        run: |
+          docker build -t todo-be-fastapi ./be-fastapi
+
+  # 4. Frontend Next.js
+  fe-nextjs:
+    name: Build & Check (fe-nextjs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Filter changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            nextjs:
+              - 'fe-nextjs/**'
+              - '.github/workflows/ci.yml'
+
+      - name: Setup Node.js
+        if: steps.filter.outputs.nextjs == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies & Build
+        if: steps.filter.outputs.nextjs == 'true'
+        run: |
+          cd fe-nextjs
+          npm install
+          npm run build
+
+  # 5. Frontend Vite
+  fe-vite:
+    name: Build & Check (fe-vite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Filter changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            vite:
+              - 'fe-vite/**'
+              - '.github/workflows/ci.yml'
+
+      - name: Setup Node.js
+        if: steps.filter.outputs.vite == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies & Build
+        if: steps.filter.outputs.vite == 'true'
+        run: |
+          cd fe-vite
+          npm install
+          npm run build
