@@ -5,61 +5,252 @@ Explanations for each bullet point in [level-2-junior.md](level-2-junior.md).
 ## Frontend
 
 **Understanding `useEffect` dependency arrays, avoiding infinite loops / stale closures**
-The dependency array (`[a, b]` in `useEffect(fn, [a, b])`) instructs React: "only re-run `fn` when `a` or `b` changes". Passing an empty array `[]` = run once after initial render; omitting the array entirely = run after EVERY render (usually a bug). A classic infinite loop occurs when `useEffect` calls `setState`, and that state variable is included in the dependency array or causes a re-render that triggers the effect again. A "stale closure" happens when a function inside an effect captures variable values from the render scope when the effect was created rather than receiving updated values — caused by omitting that variable from the dependency array.
+The dependency array (`[a, b]` in `useEffect(fn, [a, b])`) instructs React: "only re-run `fn` when `a` or `b` changes".
+
+* **Behavior Comparison:**
+  * `useEffect(fn)` *(No array)* $\rightarrow$ Runs after **every** render (frequently an unintended bug).
+  * `useEffect(fn, [])` *(Empty array)* $\rightarrow$ Runs **once** after initial render (on mount).
+  * `useEffect(fn, [count])` *(With deps)* $\rightarrow$ Runs after initial render, and whenever `count` changes.
+
+* **Visualizing an Infinite Loop:**
+  ```tsx
+  // ❌ BAD: Infinite Loop
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    setCount(count + 1); // 1. Triggers state update
+  }, [count]);            // 2. `count` changed -> causes re-render -> effect executes again!
+  ```
+  ```text
+  Render (count = 0) ──> useEffect runs ──> setCount(1)
+         ▲                                      │
+         └──────────────── Re-render ───────────┘ (Infinite Cycle 🔄)
+  ```
+
+* **Visualizing a Stale Closure:**
+  ```tsx
+  // ❌ BAD: Stale Closure
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // Bug: `count` is captured from render 1 scope where count = 0.
+      // Every 1s, it calculates 0 + 1 = 1, so `count` never increments past 1!
+      setCount(count + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []); // Empty deps -> effect closure traps initial state (0)
+  ```
+  ```text
+  Render 1 (count = 0) ──> Closure captures count = 0 ──> setInterval runs (0 + 1 = 1)
+  Render 2 (count = 1) ──> useEffect skipped ([])   ──> setInterval STILL uses trapped count (0) ──> count stuck at 1!
+  ```
+  * **Fix:** Use a functional state updater `setCount(prev => prev + 1)` or add `count` to the dependency array.
 
 **Logical child component decomposition, typed props**
-Decomposing a large single component into smaller subcomponents (e.g., `TodoList` rendering multiple `TodoItem` components) makes each part easier to test, reuse, and allows React to re-render only the affected sub-tree. Typed props (TypeScript `interface Props { title: string; onToggle: (id: number) => void }`) catch invalid prop types at compile-time rather than runtime.
+Decomposing a large single component into smaller subcomponents (e.g., `TodoList` rendering multiple `TodoItem` components) makes each part easier to test, reuse, and allows React to re-render only the affected sub-tree.
+```tsx
+interface TodoItemProps {
+  id: number;
+  title: string;
+  completed: boolean;
+  onToggle: (id: number) => void;
+}
+
+export function TodoItem({ id, title, completed, onToggle }: TodoItemProps) {
+  return (
+    <div onClick={() => onToggle(id)}>
+      <span style={{ textDecoration: completed ? 'line-through' : 'none' }}>{title}</span>
+    </div>
+  );
+}
+```
 
 **Form management: controlled inputs, basic validation**
-A "controlled input" means the input value is driven by React state (`value={title} onChange={e => setTitle(e.target.value)}`) — React retains full control of current state, unlike "uncontrolled inputs" (where the DOM manages state, accessed via `ref` when submitted). Basic validation checks required fields (`title.trim() !== ''`) and max length (`title.length <= 255`) BEFORE making API calls to provide instant UI feedback without waiting for server errors.
+* **Controlled Input Flow:**
+  ```text
+  User types "A" ──> onChange event ──> setTitle("A") ──> React Re-renders ──> Input value = "A"
+  ```
+* **Client-side Validation Example:**
+  ```tsx
+  function AddTodoForm({ onAdd }: { onAdd: (title: string) => void }) {
+    const [title, setTitle] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!title.trim()) return setError('Title is required');
+      if (title.length > 255) return setError('Title too long');
+      onAdd(title);
+      setTitle('');
+    };
+
+    return (
+      <form onSubmit={handleSubmit}>
+        <input value={title} onChange={e => { setTitle(e.target.value); setError(''); }} />
+        {error && <span className="error">{error}</span>}
+      </form>
+    );
+  }
+  ```
 
 **CSS framework (Tailwind), responsive design**
-Tailwind provides utility classes applied directly within JSX (`className="flex gap-2 p-4"`) instead of writing separate CSS stylesheets — speeding up development without class-naming friction. Responsive/mobile-first design styles small mobile screens by default, using media breakpoint prefixes (`md:`, `lg:`) to adapt layouts for larger viewports — Tailwind enforces this mobile-first paradigm by design.
+Tailwind provides utility classes applied directly within JSX (`className="flex gap-2 p-4"`). Mobile-first responsive design uses media query prefixes (`md:`, `lg:`) to scale layouts for larger screens:
+```tsx
+// Mobile default: flex-col (vertical) | Medium screens (md:): flex-row (horizontal)
+<div className="flex flex-col md:flex-row gap-4 p-4">
+  <div className="w-full md:w-1/2">Left Pane</div>
+  <div className="w-full md:w-1/2">Right Pane</div>
+</div>
+```
 
 **`useMemo`/`useCallback`**
-`useMemo(fn, deps)` recomputes a memoized value only when `deps` change — preventing expensive calculations on every render. `useCallback(fn, deps)` does the same specifically for FUNCTIONS (preserving referential equality across renders when `deps` remain unchanged) — essential when passing callbacks to child components optimized with `React.memo`, preventing unnecessary re-renders.
+* `useMemo`: Memoizes expensive computation outputs.
+* `useCallback`: Preserves function reference identity across renders for child components wrapped in `React.memo`.
 
 ## Backend
 
 **Basic architectural separation: routes → controller**
-Routes define "which URL triggers which handler" (`router.get('/todos', todoController.list)`); controllers contain request/response processing logic. Decoupling routes from controllers keeps route definitions clean and readable (a plain list of endpoints) while keeping controllers independently testable and decoupled from URL paths.
+Decoupling endpoint registration from request processing logic:
+```text
+HTTP Request (GET /api/todos) ──> Express Router ──> TodoController.getTodos() ──> Response
+```
+* `todo.routes.ts`: `router.get('/todos', todoController.getTodos);`
+* `todo.controller.ts`:
+  ```typescript
+  export const getTodos = async (req: Request, res: Response) => {
+    const todos = await todoService.findAll();
+    res.json(todos);
+  };
+  ```
 
 **Input validation using libraries (`zod`/`joi`)**
-Instead of manually writing `if (!title) return res.status(400)...`, declare a schema (`z.object({ title: z.string().min(1) })`) and invoke `schema.parse(body)` — automatically enforcing data contracts, throwing standardized validation errors, and avoiding unhandled input fields as APIs grow in complexity. See [`src/schemas/todo.schema.ts`](../../be-node-express/src/schemas/todo.schema.ts).
+Declarative validation schemas replace manual `if (!title)` checks:
+```typescript
+import { z } from 'zod';
+
+export const createTodoSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  completed: z.boolean().optional().default(false),
+});
+
+// Inside middleware / handler:
+const validatedBody = createTodoSchema.parse(req.body); // Throws ZodError if invalid
+```
 
 **Centralized error handling middleware**
-Middleware functions `(req, res, next)` execute before or after route handlers. A centralized error handling middleware placed at the END of the Express pipeline (`app.use(errorHandler)`) catches all errors passed via `next(err)` or thrown from preceding routes/middlewares, formatting unified error JSON responses — replacing fragmented `try/catch` blocks scattered across routes. See [`src/middleware/errorHandler.ts`](../../be-node-express/src/middleware/errorHandler.ts).
+```text
+Route Handler ──(throw error / next(err))──> Error Handling Middleware ──> Uniform JSON Error
+```
+```typescript
+// Registered at the very END of Express middleware chain:
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
+```
 
 **Basic Authentication: password hashing (`bcrypt`), JWT sign/verify**
-`bcrypt.hash(password, saltRounds)` converts a password into a 1-way cryptographic hash (irreversible to the original password); `bcrypt.compare(input, hash)` validates user input without ever needing to know the original plaintext password. JWT (JSON Web Token) is a 3-part string `header.payload.signature` signed by the server using a secret key — clients store the token and attach it in the `Authorization: Bearer <token>` header on subsequent requests; the server verifies the cryptographic signature without querying the database for every single request.
+* **JWT Structure:**
+  ```text
+  eyJhbGciOi... . eyJzdWIiOi... . ZmRzYWYx...
+  [ Header ]     . [ Payload ]   . [ Signature ]
+  (Alg & Type)    (User Claims)    (HMAC Secret Verification)
+  ```
+* Clients store JWT and include it in requests: `Authorization: Bearer <token>`.
 
 **SQL: `JOIN`, Foreign Keys, `INDEX`**
-`JOIN` combines rows from two or more tables based on a related column (e.g., `todos LEFT JOIN categories ON categories.id = todos.category_id`) — retrieving category names alongside todos in a single query. A Foreign Key is a constraint ensuring column values reference existing records in another table (e.g., `todos.category_id` must match a valid `id` in `categories`) — enforced automatically by the relational database engine. An Index is a secondary data structure (typically a B-tree) enabling fast lookup speeds for indexed columns, at the cost of additional storage overhead and slightly slower `INSERT`/`UPDATE` operations (since index trees must be updated).
+* **SQL `JOIN` Data Combination:**
+  ```sql
+  SELECT todos.id, todos.title, categories.name AS category
+  FROM todos
+  LEFT JOIN categories ON categories.id = todos.category_id;
+  ```
+* **Foreign Key:** `todos.category_id REFERENCES categories(id) ON DELETE CASCADE`.
+* **Database Index (B-Tree):** Secondary index structure speeding up `WHERE` lookups from $O(N)$ sequential table scans to $O(\log N)$.
 
 ## DevOps
 
 **Writing a single-stage Node.js `Dockerfile`**
-Minimal structure: `FROM node:18-alpine` → `WORKDIR /app` → `COPY package*.json ./` → `RUN npm install` → `COPY . .` → `CMD ["node", "index.js"]`. Copying `package*.json` BEFORE running `npm install` (rather than copying all source code first) allows Docker to leverage layer caching for `npm install` — if source code changes but dependencies remain unchanged, subsequent builds execute significantly faster by skipping dependency re-installation.
+Docker layer caching mechanism relies on `COPY package*.json` order:
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+
+# Step 1: Copy dependency manifests FIRST (Layer cached if lockfile unchanged)
+COPY package*.json ./
+RUN npm install
+
+# Step 2: Copy source files AFTER (Invalidates only source layer when code changes)
+COPY . .
+CMD ["node", "index.js"]
+```
 
 **`docker-compose.yml` for dependent services**
-`depends_on: [db]` instructs Docker to start the `db` container before dependent application containers (note: it does NOT wait for PostgreSQL inside `db` to finish initialization and accept connections — which is why application code must implement retry logic). `networks` defines virtual bridge networks for container-to-container communication using service names; `volumes` persist stateful data across container lifecycles (e.g., `pgdata_dev` retains database storage even if containers are destroyed and recreated).
+```yaml
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  backend:
+    build: .
+    depends_on:
+      - db # Starts 'db' container before 'backend'
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/tododb
+
+volumes:
+  pgdata: # Named volume for persistent database storage
+```
 
 **Reading CI pipeline YAML files**
-`on: push/pull_request` defines trigger conditions; each `job` runs independently (in parallel by default) on an isolated runner; `steps` within a job execute sequentially. `actions/checkout` fetches repository code into the runner context (a mandatory initial step required before subsequent steps can execute scripts).
+Pipeline triggers execute sequential steps inside isolated runners:
+```yaml
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  # Step 1: Fetch repository code
+      - uses: actions/setup-node@v3 # Step 2: Install Node runtime
+      - run: npm ci                 # Step 3: Install dependencies
+      - run: npm run build          # Step 4: Execute build script
+```
 
 ## Security
 
 **Proper password hashing and salt rounds**
-A "salt" is a random string concatenated with a password prior to hashing, ensuring two users with identical passwords produce distinct hash values (protecting against pre-computed rainbow table attacks). `bcrypt` generates and embeds the salt directly inside the output hash string. "Salt rounds" (e.g., 12) determine the computational work factor — higher iterations increase security but consume more CPU time; 10–12 is the industry standard balance point.
+```text
+Plaintext Password + Random Salt ──(bcrypt iterations)──> Unique One-Way Hash Output
+```
+Salt rounds (e.g., `12`) specify $2^{12} = 4096$ hashing iterations, slowing down brute-force rainbow table dictionary attacks.
 
 **Parameterized queries and SQL injection**
-Direct string concatenation (`` `SELECT * FROM users WHERE email = '${email}'` ``) allows attackers to inject input like `email = "' OR '1'='1"` to turn `WHERE` conditions into tautologies, leaking the entire database table. Parameterized queries (`pool.query('... WHERE email = $1', [email])`) separate SQL commands from untrusted parameter values — the database driver safely escapes input values so they are never executed as SQL code.
+* **❌ Vulnerable String Concatenation:**
+  ```typescript
+  // Input: email = "' OR '1'='1"
+  const query = `SELECT * FROM users WHERE email = '${email}'`;
+  // Resulting SQL: SELECT * FROM users WHERE email = '' OR '1'='1' (Returns entire DB!)
+  ```
+* **✅ Parameterized Query:**
+  ```typescript
+  const query = 'SELECT * FROM users WHERE email = $1';
+  await pool.query(query, [email]); // Input safely escaped by PostgreSQL driver
+  ```
 
 **CORS: `origin` vs `credentials`**
-CORS (Cross-Origin Resource Sharing) is a browser security mechanism restricting cross-origin HTTP requests (e.g., from `localhost:5173` to `localhost:5001`) unless explicitly permitted by the target server via the `Access-Control-Allow-Origin` header. When requests include credentials/cookies (`credentials: true` on the client), servers MUST NOT specify a wildcard `origin: '*'` — browsers will reject the response; servers must explicitly match specific origins (or dynamically reflect allowed origins as done in [`src/app.ts`](../../be-node-express/src/app.ts)).
+| Header Configuration | Wildcard (`origin: '*'`) | Specific Origin (`origin: 'http://localhost:5173'`) |
+| :--- | :--- | :--- |
+| **`credentials: false`** | ✅ Allowed | ✅ Allowed |
+| **`credentials: true`** *(Cookies/Auth)* | ❌ **Rejected by Browsers** | ✅ Allowed |
 
 **XSS and output escaping**
-XSS (Cross-Site Scripting) occurs when attackers inject malicious `<script>` tags or raw HTML payload into application data, which is subsequently rendered directly by victim browsers (e.g., a todo title containing `<script>steal cookie</script>`). React automatically escapes values rendered inside JSX `{}` (converting `<` into `&lt;`) — risk only arises when explicitly invoking `dangerouslySetInnerHTML`.
+React automatically escapes HTML strings rendered inside JSX `{}`:
+```tsx
+const userBio = "<script>alert('XSS Attack')</script>";
+return <div>{userBio}</div>; // Renders safely as plaintext: &lt;script&gt;...&lt;/script&gt;
+```
 
 ## Practical Self-Study Guide
 

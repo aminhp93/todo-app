@@ -6,53 +6,118 @@ At this level, every concept connects directly to a QUESTION you must answer for
 ## General Requirements (FE + BE)
 
 **Microservices vs Modular Monolith, When NOT to Split Services**
-Modular Monolith: 1 codebase, 1 deployment unit, with code structured into cleanly bounded modules (analogous to Level 4 module boundaries) — simplifying operations and enabling easy cross-module transactions within a single DB transaction block. Microservices: independent service deployment units, enabling tech stack diversity — at the cost of managing inter-service network calls (slower, prone to transient network errors), complex distributed transactions (requiring Saga patterns over standard `COMMIT`/`ROLLBACK`), and operational maintenance overhead across N microservices. Key self-assessment question: "Does my engineering organization possess sufficient operational capacity to manage N distinct services, or am I splitting into microservices for trend alignment rather than architectural necessity?"
+```text
+Monolithic App:       Modular Monolith:             Microservices:
++-----------------+   +-------------------------+   +--------+ +--------+
+| UI + Logic + DB |   | Auth | Billing | Order  |   | Auth   | | Billing|
+| (All in 1 unit) |   | (Separate modules in 1) |   | Service| | Service|
++-----------------+   +-------------------------+   +---+----+ +---+----+
+                                                        |          |
+                                                        ▼          ▼
+                                                   [ Network REST / gRPC ]
+```
 
 **Domain-Driven Design: Bounded Contexts**
-A Bounded Context defines domain boundaries wherein business models retain precise, UNAMBIGUOUS meanings — e.g., a "User" in an "Auth" context (credentials, authorization roles) differs fundamentally from a "User" in a "Billing" context (billing addresses, payment methods). A common architectural antipattern involves creating a bloated, monolithic "User" table consumed globally across all domains, creating fragile cross-domain dependencies.
+```text
+                  +-----------------------------------+
+                  |           User Entity             |
+                  +-----------------------------------+
+                                    |
+         +--------------------------+--------------------------+
+         |                                                     |
+         ▼                                                     ▼
++-------------------------+                           +-------------------------+
+| Auth Bounded Context    |                           | Billing Bounded Context |
+|  - id                   |                           |  - id                   |
+|  - email                |                           |  - paymentMethod        |
+|  - passwordHash         |                           |  - billingAddress       |
+|  - role                 |                           |  - taxId                |
++-------------------------+                           +-------------------------+
+```
 
 **API Gateway, BFF (Backend for Frontend) Pattern**
-An API Gateway acts as a centralized ingress reverse proxy for multiple microservices — standardizing authentication, rate limiting, and request routing. BFFs establish tailored API layers optimized for specific client platforms (web vs mobile BFFs) — addressing platform-specific payload requirements (e.g., mobile clients requiring compressed payload fields) and preventing bloated, one-size-fits-all API endpoints.
+```text
+[ Web Client ]               [ Mobile App ]
+      │                            │
+      ▼                            ▼
++------------+               +--------------+
+| Web BFF    |               | Mobile BFF   |  <-- Tailors response payload shapes
++-----+------+               +------+-------+
+      |                             |
+      +--------------+--------------+
+                     │
+                     ▼
+             [ API Gateway ]  <-- Auth verification, Rate limiting, Routing
+                     │
+      +--------------+--------------+
+      |                             |
+      ▼                             ▼
++-----------+                 +-----------+
+| User Svc  |                 | Order Svc |
++-----------+                 +-----------+
+```
 
 **Technical Roadmap Planning: Technical Debt, Impact vs Effort Matrix**
-Technical debt accumulates when prioritizing short-term expediency over long-term architecture (justified at the time, but requiring scheduled remediation). Prioritize technical debt using an Impact (cost of inaction) × Effort (remediation cost) matrix — targeting high-impact, low-effort items first. Persuading non-technical stakeholders requires framing technical debt in business terms (e.g., feature velocity degradation, downtime revenue loss) rather than abstract code aesthetics.
+```text
+          High Impact
+              │
+    [ Quick Wins ]      |  [ Strategic Projects ]
+    (Fix Immediately)   |  (Schedule & Resource)
+    --------------------+--------------------
+    [ Low Priority ]    |  [ Time Sinks ]
+    (Ignore / Deprecate)|  (Avoid / Re-evaluate)
+              │
+              └──────────────────────── Low to High Effort
+```
 
 **Incident Management: On-Call Rotations, Blameless Postmortems, Action Items**
-On-call rotations distribute off-hours incident response responsibilities across engineering teams. Blameless postmortems analyze systemic, process, and tooling root causes that allowed incidents to occur (rather than assigning personal blame) — psychological safety encourages transparent reporting, whereas personal fault leads to incident concealment. Action items must specify explicit single owners and target completion deadlines; unowned action items render postmortems ineffective.
-
-**Scalable Mentorship, RFCs**
-Scalable mentorship involves designing growth frameworks for entire engineering organizations (like this roadmap document), extending beyond 1-on-1 code reviews. An RFC (Request for Comments) documents technical proposals, trade-offs, and alternative architectures to gather peer feedback BEFORE finalizing decisions — unlike ADRs (which document past decisions made), RFCs facilitate pre-decision design alignment.
+```text
+Incident Alerts ──> On-Call Engineer Paged ──> Triage & Mitigate ──> Blameless Postmortem ──> Action Items (Owner + SLA)
+```
 
 ## DevOps (Platform / SRE)
 
 **Platform Engineering: Internal Developer Platforms (IDP)**
-IDPs build self-service developer tooling enabling product teams to provision infrastructure (DB instances, message queues) and execute deployments independently without needing low-level Kubernetes or Terraform expertise. The objective: eliminate platform team ticket bottlenecks and empower product feature team velocity.
+```text
+Developer ──(Self-service Portal / CLI)──> Internal Platform (IDP) ──(Automated Provisioning)──> K8s / RDS / S3
+```
 
 **SRE: SLA / SLO / SLI, Error Budgets**
-SLIs (Service Level Indicators) provide quantifiable telemetry metrics (e.g., % successful requests). SLOs (Service Level Objectives) establish internal reliability targets for SLIs (e.g., 99.5% success over 30 days). SLAs (Service Level Agreements) represent customer-facing contractual commitments with penalty clauses — set conservatively lower than internal SLOs to maintain safety margins. Error Budgets represent `100% - SLO` (e.g., a 99.5% SLO leaves a 0.5% error budget) — remaining error budget permits aggressive feature deployment; an exhausted error budget mandates feature freezes to focus exclusively on stability.
+```text
+  Telemetry Data  ──>  SLI (e.g. 99.7% Success) ──>  SLO Target (e.g. 99.5%) ──>  SLA Commitment (e.g. 99.0%)
+                                                           │
+                                                           ▼
+                                               Error Budget = 100% - SLO (0.5% Allowed Downtime)
+```
+```text
+Error Budget Status:
+[ 100% Budget Remaining ] ──(Normal Feature Shipping)──> [ Budget Depleted ] ──> Feature Freeze / Focus on Reliability
+```
 
 **Multi-region / Disaster Recovery: RTO / RPO, Real Restore Testing**
-RTO (Recovery Time Objective): maximum acceptable downtime window prior to full operational recovery. RPO (Recovery Point Objective): maximum acceptable data loss window (e.g., 1-hour RPO = hourly backups, max 1 hour lost data). "Real restore testing" is frequently neglected: possessing backup archives does NOT guarantee successful recovery — unvalidated backup corruptions surface only during live restore attempts, highlighting the need for scheduled automated restore validation tests.
-
-**Chaos Engineering**
-Chaos engineering proactively injects controlled failures into production environments (e.g., terminating instances randomly, introducing synthetic network latency) to expose hidden failure modes (missing retries, missing timeouts, single points of failure) prior to unscripted production outages. Applicable only when system observability is mature enough to monitor impact accurately.
-
-**Cost Optimization: Right-Sizing, Reserved Instances, FinOps**
-Right-sizing aligns instance capacity directly with measured utilization telemetry. Reserved instances / savings plans commit to long-term cloud provider utilization in exchange for reduced billing rates — trading operational flexibility for cost efficiency. FinOps establishes ongoing financial management practices across engineering and finance teams to govern cloud spend continuously.
+```text
+Incident / Disaster Event
+         │
+         |<─── RPO (Max Lost Data Window, e.g. 1 hour backup) ───|
+         |
+         |─── RTO (Max Downtime Window to Full Recovery, e.g. 4 hours) ───> Recovery Complete
+```
 
 ## Security (Security Leadership)
 
 **Zero Trust, SSO / OIDC**
-Zero Trust enforces continuous authentication and authorization for every request, regardless of whether traffic originates inside internal networks (rejecting legacy perimeter security assumptions). SSO (Single Sign-On) powered by OIDC (OpenID Connect) provides centralized authentication across internal services, reducing credential sprawl and enabling instant access revocation upon employee offboarding.
+```text
+Perimeter Model (Legacy):  [ Firewall ] ──> Inside Network = Implicit Trust (Vulnerable ⚠️)
+
+Zero Trust Model (Modern):  Every Request ──> Verify Identity (OIDC) ──> Verify Device ──> Least Privilege Access
+```
 
 **Incident Response Processes: Playbooks, Severity Standards, Postmortems**
-Incident playbooks define pre-approved operational steps for specific incident classes — clarifying role assignments and escalation paths during high-pressure outages. Severity classification levels (e.g., Sev1 = total outage, Sev4 = minor non-impacting glitch) dictate required SLA response urgency. Security postmortems incorporate legal reporting requirements (e.g., mandatory data breach notifications under regulatory frameworks) and public communications strategies.
-
-**Practical Compliance Implementation (SOC 2 / ISO 27001 / GDPR)**
-Compliance goes beyond ticking checklists — it involves cross-functional coordination (engineering, legal, HR) to produce audit trails (access logs, code review records, employee training) that satisfy independent third-party SOC 2 / ISO 27001 auditors. GDPR enforces data privacy regulations for EU citizen data globally.
-
-**Security Champions Programs**
-Rather than funneling all security reviews through a centralized security team bottleneck, Security Champions embed trained security focal points directly within product feature teams to handle initial security triage and escalate complex issues to central teams.
+| Severity Level | Impact Description | SLA Target Response | Escalation Path |
+| :--- | :--- | :--- | :--- |
+| **Sev-1 (Critical)** | Core service outage affecting all users | < 15 minutes | Executive Team + Lead Engineers |
+| **Sev-2 (Major)** | Major feature degraded, no workaround | < 1 hour | On-Call Team + Domain Leads |
+| **Sev-3 (Minor)** | Minor issue, workaround available | < 24 hours | Standard Ticket Backlog |
 
 ## Practical Self-Study Guide
 
