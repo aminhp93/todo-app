@@ -1,113 +1,55 @@
 # Level 6 — Principal / Consultant
 
-Ở mức này, giá trị bạn tạo ra không còn đo bằng code nữa — mà bằng **quyết
-định đúng, được truyền đạt rõ ràng, cho người không (hoặc ít) chuyên kỹ
-thuật**, với hệ quả tài chính/tổ chức thật.
+At this level, the value you generate is no longer measured in lines of code written — but by **making sound decisions, communicating them clearly to non-technical (or non-specialist) stakeholders**, and delivering real organizational and financial impact.
 
-> Tự trả lời từng gạch đầu dòng trước khi xem [đáp án/giải thích chi tiết](level-6-principal-consultant-answers.md).
+> Self-answer each bullet point before viewing the [answers/detailed explanation](level-6-principal-consultant-answers.md).
 
-## Yêu cầu
+## Requirements
 
-- **Tư vấn chiến lược công nghệ**: đưa nhiều phương án kiến trúc kèm
-  chi phí/rủi ro/thời gian cho từng phương án, không chỉ 1 giải pháp "đúng
-  nhất về kỹ thuật".
-- **Business acumen**: hiểu ROI, TCO (Total Cost of Ownership), cloud cost
-  optimization, và liên hệ được quyết định kỹ thuật với mục tiêu kinh doanh
-  (vd: "giảm latency 200ms" chỉ có giá trị nếu liên hệ được tới conversion
-  rate/doanh thu).
-- **Technical due diligence**: đánh giá 1 codebase/hệ thống lạ trong thời
-  gian ngắn (M&A, audit trước khi ký hợp đồng), ra được báo cáo rủi ro rõ
-  ràng.
-- **Build vs Buy**: biết khi nào tự xây, khi nào dùng SaaS/vendor, đánh giá
-  vendor lock-in.
-- **Compliance & risk**: GDPR, SOC2, data residency — biết khi nào cần kéo
-  chuyên gia pháp lý vào, không tự quyết định thay.
-- **Chuẩn hoá tổ chức**: technology radar (công nghệ nào adopt/trial/hold/
-  retire), best practices áp dụng cho nhiều team/dự án khác nhau, không
-  phải 1 codebase.
-- **Kỹ năng trình bày**: viết proposal, thuyết trình cho C-level, bảo vệ
-  được quyết định trước phản biện gay gắt.
+- **Strategic Technology Consulting**: presenting multiple architectural options complete with cost, risk, and delivery timelines for each choice, rather than forcing a single "technically pure" solution.
+- **Business Acumen**: understanding ROI, TCO (Total Cost of Ownership), cloud cost optimization, and tying technical choices directly to business outcomes (e.g., "reducing latency by 200ms" holds value only when correlated to conversion rate / revenue gains).
+- **Technical Due Diligence**: assessing unfamiliar codebases and systems under tight timelines (M&A due diligence, pre-contract audits), producing clear risk reports.
+- **Build vs Buy Evaluation**: evaluating when to build in-house vs leverage SaaS/vendors, assessing vendor lock-in exposure.
+- **Compliance & Risk Management**: GDPR, SOC 2, data residency — recognizing when to involve legal counsel rather than making unilateral assumptions.
+- **Organizational Standardization**: Technology Radar management (categorizing technologies under adopt/trial/hold/retire), codifying cross-team engineering standards across multiple domain initiatives.
+- **Executive Communication Skills**: drafting formal proposals, delivering C-level presentations, and defending strategic decisions under tough interrogation.
 
-**Keywords**: TCO, ROI, technical due diligence, technology radar,
-build-vs-buy, vendor lock-in, SOC2/GDPR, cost-benefit analysis, executive
-summary, risk register, statement of work (SOW).
+**Keywords**: TCO, ROI, technical due diligence, technology radar, build-vs-buy, vendor lock-in, SOC2/GDPR, cost-benefit analysis, executive summary, risk register, statement of work (SOW).
 
-## Áp dụng vào `todo-app`
+## Application in `todo-app`
 
-Ở mức này, "code demo trong todo-app" gần như không còn ý nghĩa — nhưng
-chính dự án này vẫn là chất liệu tốt để luyện **artifact tư vấn thật**, vì
-nó có đủ context cụ thể để phân tích thay vì nói chung chung. Bài tập đề
-xuất, tự làm và tự chấm bằng cách đưa cho người khác đọc (không giải thích
-thêm):
+At this level, "demo code in todo-app" is largely irrelevant — however, this project serves as prime material for practicing **authentic consulting artifacts**, containing sufficient concrete context to perform real analysis rather than generic generalities. Recommended exercise: complete and evaluate the following deliverables by sharing them with non-technical peers without extra verbal explanation:
 
-1. **Technical due diligence report (giả lập)**: đóng vai một consultant
-   được thuê để đánh giá `todo-app` trước khi một công ty "mua lại"/tiếp
-   quản dự án. Viết report 1 trang gồm: kiến trúc hiện tại, rủi ro (vd: 3
-   backend cùng lúc là dấu hiệu thiếu quyết định rõ ràng — chi phí bảo trì
-   gấp 3 lần cho cùng 1 tính năng), technical debt (thiếu test, thiếu
-   migration tool, secrets hardcode trong `docker-compose.prod.yml` dùng
-   giá trị mặc định), và khuyến nghị ưu tiên theo effort/impact.
-2. **Build vs Buy memo**: `be-node-express` tự viết JWT + session auth từ
-   đầu. Viết memo so sánh với việc dùng Auth0/Clerk/Supabase Auth — chi phí,
-   tốc độ ra thị trường, rủi ro vendor lock-in, khi nào tự xây hợp lý hơn.
-3. **Executive summary**: tóm tắt toàn bộ `GUIDE.md` kỹ thuật thành 5 dòng
-   cho một người không biết code đọc hiểu được giá trị và rủi ro.
+1. **Simulated Technical Due Diligence Report**: adopt the role of an external consultant hired to evaluate `todo-app` prior to an acquisition / handover. Write a 1-page report detailing: current architecture, risks (e.g., 3 concurrent backends indicates a lack of technical direction — tripling maintenance overhead for identical features), technical debt (lack of test suites, absence of versioned migration tools, static hardcoded defaults in `docker-compose.prod.yml`), and prioritized recommendations by effort/impact.
+2. **Build vs Buy Decision Memo**: `be-node-express` implements custom JWT + session authentication from scratch. Write a decision memo comparing this approach against leveraging Auth0/Clerk/Supabase Auth — examining costs, time-to-market, vendor lock-in risks, and scenarios where custom build implementations remain justifiable.
+3. **Executive Summary**: condense the entire technical `GUIDE.md` into 5 concise lines tailored for non-technical stakeholders to grasp business value and operational risk.
 
-Nếu bạn viết được cả 3 tài liệu trên **mà không cần liệt kê thuật ngữ
-technical để nghe "có vẻ giỏi"**, và người đọc không rành kỹ thuật vẫn ra
-quyết định được — đó là dấu hiệu thật của Level 6.
+If you can author all 3 documents **without relying on jargon to sound proficient**, enabling non-technical readers to make confident decisions — that demonstrates genuine Level 6 mastery.
 
-## DevOps (tư vấn hạ tầng & vận hành)
+## DevOps (Infrastructure & Operational Consulting)
 
-**Yêu cầu**
-- Tư vấn cloud strategy: multi-cloud vs single-vendor, đánh giá vendor
-  lock-in ở mức hợp đồng/chi phí chuyển đổi, không chỉ kỹ thuật.
-- FinOps ở quy mô tổ chức: cost governance giữa nhiều team/dự án, budget
-  alerting, showback/chargeback.
-- Chuẩn hoá công cụ DevOps cho nhiều team (technology radar riêng cho hạ
-  tầng: CI/CD tool nào, IaC tool nào là chuẩn chung).
-- Đánh giá mức độ trưởng thành vận hành (operational maturity assessment)
-  của 1 tổ chức/dự án — tương tự security due diligence nhưng cho DevOps.
+**Requirements**
+- Cloud strategy consulting: evaluating multi-cloud vs single-vendor strategies, assessing vendor lock-in at contract and migration cost levels beyond technical factors.
+- Organizational FinOps: establishing cost governance across multiple teams and projects, enforcing budget alerts, implementing showback/chargeback accounting models.
+- Cross-team DevOps tool standardization (infrastructure-specific Technology Radar: defining standard CI/CD and IaC tools).
+- Operational maturity assessments: evaluating organizational operational maturity across systems — analogous to security due diligence for operations.
 
-**Keywords**: FinOps, cost governance, showback/chargeback, operational
-maturity assessment, cloud vendor lock-in, technology radar (hạ tầng).
+**Keywords**: FinOps, cost governance, showback/chargeback, operational maturity assessment, cloud vendor lock-in, infrastructure technology radar.
 
-**Áp dụng vào `todo-app`**: viết 1 **operational maturity assessment giả
-lập** cho `todo-app` — dùng đúng cấu trúc bạn sẽ dùng cho khách hàng thật:
-điểm số từng hạng mục (CI/CD, observability, disaster recovery, cost
-control), bằng chứng cụ thể (vd: "CI chưa chạy test ⇒ điểm thấp ở hạng mục
-Quality Gate"), và roadmap 3 giai đoạn (0-1 tháng / 1-3 tháng / 3-6 tháng)
-để nâng điểm — đây chính là loại báo cáo một consultant hạ tầng giao cho
-khách hàng.
+**Application in `todo-app`**: Write a **simulated operational maturity assessment** for `todo-app` using authentic client report structures: scores across categories (CI/CD, observability, disaster recovery, cost governance), concrete supporting evidence (e.g., "CI lacks automated test execution ⇒ low quality gate score"), and a 3-phase improvement roadmap (0–1 month / 1–3 months / 3–6 months) to elevate operational maturity — reflecting the deliverables an infrastructure consultant delivers to clients.
 
-## Security (tư vấn bảo mật)
+## Security (Security Consulting)
 
-**Yêu cầu**
-- Security due diligence (M&A): đánh giá rủi ro bảo mật của 1 hệ thống
-  trong thời gian ngắn, định lượng được rủi ro (không chỉ liệt kê lỗ hổng).
-- Hiểu bối cảnh pháp lý/bảo hiểm: cyber insurance yêu cầu gì, regulatory
-  landscape khác nhau giữa các thị trường (vd: GDPR ở EU vs quy định nội
-  địa khác).
-- Risk register: liệt kê rủi ro kèm xác suất × mức độ ảnh hưởng, không
-  phải danh sách lỗ hổng kỹ thuật thuần túy.
-- Giao tiếp rủi ro bảo mật cho C-level: quy đổi rủi ro kỹ thuật thành rủi ro
-  kinh doanh/pháp lý/uy tín.
+**Requirements**
+- Security due diligence (M&A): rapidly evaluating security postures under acquisition timelines, quantifying risk exposure beyond vulnerability lists.
+- Navigating legal / insurance landscapes: understanding cyber insurance prerequisites and varying regulatory environments (e.g., EU GDPR vs local data protection laws).
+- Risk registers: quantifying risks by Probability × Impact rather than listing isolated technical vulnerabilities.
+- C-level security risk communication: translating technical vulnerabilities into business, legal, and reputational risk terms.
 
-**Keywords**: security due diligence, cyber insurance, regulatory
-landscape, risk register (probability × impact), risk-to-business
-translation.
+**Keywords**: security due diligence, cyber insurance, regulatory landscape, risk register (probability × impact), risk-to-business translation.
 
-**Áp dụng vào `todo-app`**: viết 1 **risk register giả lập** cho `todo-app`
-với ít nhất 5 rủi ro thật đã biết từ dự án (vd: "3 backend cùng schema,
-không đồng bộ auth ⇒ xác suất trung bình, ảnh hưởng cao nếu 1 backend thiếu
-patch bảo mật mà 2 backend kia không hay biết"; "DB user dùng superuser
-`postgres` ⇒ xác suất thấp, ảnh hưởng nghiêm trọng nếu bị khai thác"), mỗi
-rủi ro có cột xác suất, ảnh hưởng, và khuyến nghị xử lý — rồi tự hỏi: "nếu
-tôi là CFO/CEO đọc bảng này, tôi có biết nên ưu tiên chi tiền vào đâu
-không?"
+**Application in `todo-app`**: Write a **simulated risk register** for `todo-app` detailing at least 5 known project risks (e.g., "3 backends sharing 1 schema without auth synchronization ⇒ moderate probability, high impact if 1 backend unpatched; DB superuser `postgres` used directly ⇒ low probability, critical impact if exploited"), each with probability, impact, and mitigation recommendations — evaluating whether a CFO/CEO reviewing the document could immediately determine where to allocate budget.
 
-## Cách tự kiểm tra đã qua Level 6
+## How to Self-Check Level 6 Mastery
 
-Một stakeholder phi kỹ thuật đọc xong tài liệu của bạn, hiểu đúng rủi ro,
-và tự tin ra quyết định (đầu tư/không đầu tư, mua/tự xây) — mà không cần
-gọi bạn giải thích thêm.
+A non-technical stakeholder can read your document, accurately comprehend the risks, and confidently make strategic decisions (invest/pass, build/buy) without requiring follow-up verbal explanations.

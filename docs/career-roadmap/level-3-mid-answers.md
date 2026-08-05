@@ -1,193 +1,75 @@
-# Level 3 — Đáp án / Giải thích chi tiết
+# Level 3 — Answers / Detailed Explanations
 
-Giải thích từng gạch đầu dòng trong [level-3-mid.md](level-3-mid.md).
+Explanations for each bullet point in [level-3-mid.md](level-3-mid.md).
 
 ## Frontend
 
-**React Query/TanStack Query hoặc SWR thay vì tự `useEffect`+`useState`**
-Tự fetch bằng `useEffect` phải tự tay xử lý: loading/error state, cache
-(tránh gọi lại API đã có dữ liệu), refetch khi quay lại tab, tránh race
-condition khi request cũ trả về sau request mới. React Query làm tất cả
-việc này qua 1 hook (`useQuery(['todos'], fetchTodos)`) và thêm
-`useMutation` cho ghi dữ liệu, tự động invalidate cache liên quan sau khi
-ghi thành công (`queryClient.invalidateQueries(['todos'])`).
+**React Query / TanStack Query or SWR vs manual `useEffect` + `useState`**
+Manual fetching via `useEffect` requires hand-coding: loading/error states, caching (preventing redundant API requests for cached data), window refetching on refocus, and race condition handling when older out-of-order responses overwrite newer ones. React Query manages these complexities using a concise hook (`useQuery(['todos'], fetchTodos)`), complements writes with `useMutation`, and automatically invalidates related query caches post-mutation (`queryClient.invalidateQueries(['todos'])`).
 
-**State management client: Redux Toolkit, Zustand, Context API đúng chỗ**
-"Server state" (dữ liệu từ API — nên dùng React Query) khác "client state"
-thuần UI (vd: modal đang mở, tab đang chọn — dùng `useState`/Context là đủ).
-Redux Toolkit phù hợp khi state phức tạp, nhiều component không liên quan
-trực tiếp cùng cần đọc/sửa, cần debug time-travel. Zustand nhẹ hơn, ít
-boilerplate hơn Redux, phù hợp state vừa. Context API gây re-render TOÀN BỘ
-component con mỗi khi giá trị Context đổi — dùng cho theme/user hiện tại
-(ít đổi) không phù hợp cho state đổi liên tục (vd: gõ phím mỗi ký tự).
+**Client State Management: Redux Toolkit, Zustand, Context API**
+"Server state" (remote API data — best managed with React Query) differs fundamentally from pure UI "client state" (e.g., modal visibility, selected tab indexes — managed via `useState`/Context). Redux Toolkit excels in large-scale applications with shared state spanning unrelated components, requiring time-travel debugging. Zustand offers a lightweight alternative with minimal boilerplate. Context API causes re-renders across ALL descendant components whenever Context values change — suitable for low-frequency updates like global themes or active user sessions, but unsuitable for high-frequency state updates like keystroke inputs.
 
-**Performance: `React.memo`, code splitting, tránh re-render thừa**
-`React.memo(Component)` bọc component, chỉ re-render khi props THỰC SỰ đổi
-(so sánh nông — shallow compare). Re-render "thừa" là khi component render
-lại dù output không đổi, tốn CPU vô ích — thường do component cha re-render
-kéo theo mọi con re-render, dù con không cần. Code splitting
-(`React.lazy(() => import('./Page'))` + `<Suspense>`) tách bundle JS thành
-nhiều file nhỏ, chỉ tải phần cần khi user thực sự vào route đó, giảm thời
-gian tải trang đầu.
+**Performance: `React.memo`, Code Splitting, Preventing Unnecessary Re-renders**
+`React.memo(Component)` wraps functional components, skipping re-renders when props remain shallowly equal. "Unnecessary re-renders" occur when components execute render logic despite output state remaining unchanged, consuming CPU cycles — typically triggered when parent re-renders trigger automatic child cascade renders. Code splitting (`React.lazy(() => import('./Page'))` + `<Suspense>`) splits JS bundles into smaller chunks loaded on-demand as users navigate routes, improving initial page load performance.
 
-**Testing: Jest + React Testing Library, test theo hành vi**
-Jest chạy test và assert (`expect(x).toBe(y)`); React Testing Library (RTL)
-render component ra "DOM giả" và cho phép query/tương tác như người dùng
-thật (`screen.getByText('Add')`, `fireEvent.click(...)`) — triết lý RTL là
-test "người dùng thấy gì, làm gì" chứ KHÔNG test chi tiết implementation
-(vd: không assert state nội bộ), vì implementation đổi không nên làm test
-vỡ nếu hành vi bên ngoài vẫn đúng.
+**Testing: Jest + React Testing Library (RTL), Behavior-driven Testing**
+Jest serves as the test runner and assertion framework (`expect(x).toBe(y)`); React Testing Library (RTL) renders components into a virtual DOM, enabling user-centric assertions (`screen.getByText('Add')`, `fireEvent.click(...)`). RTL's core philosophy prioritizes testing "what the user sees and does" over implementation details (such as internal state hooks) — ensuring tests do not break during code refactoring as long as external behavior remains intact.
 
-**TypeScript chặt hơn: generic, union/discriminated union**
-Generic (`function first<T>(arr: T[]): T`) cho phép viết hàm/type tái sử
-dụng được với nhiều kiểu dữ liệu mà vẫn giữ type-safety (khác `any` — mất
-hoàn toàn kiểm tra kiểu). Union (`string | number`) nghĩa là giá trị có thể
-là 1 trong nhiều kiểu. Discriminated union dùng 1 field chung để TypeScript
-tự suy luận đúng kiểu trong từng nhánh:
-`{ status: 'loading' } | { status: 'error', message: string } | { status:
-'success', data: Todo[] }` — check `status === 'error'` thì TypeScript tự
-biết object đó chắc chắn có `message`.
+**Stricter TypeScript: Generics, Unions / Discriminated Unions**
+Generics (`function first<T>(arr: T[]): T`) enable reusable functions/types across data models while maintaining strict type-safety (unlike `any`, which disables type checking). Unions (`string | number`) represent values that can take one of several types. Discriminated unions use a shared literal property allowing TypeScript to narrow types across conditional branches:
+`{ status: 'loading' } | { status: 'error', message: string } | { status: 'success', data: Todo[] }` — checking `status === 'error'` allows TypeScript to infer that `message` is guaranteed to exist.
 
-**SSR/CSR/SSG, Web Vitals**
-CSR (Client-Side Rendering): trình duyệt tải JS trống, JS tự vẽ giao diện
-(vd: `fe-vite`) — nhanh cho tương tác sau đó nhưng chậm hiển thị lần đầu và
-SEO kém. SSR (Server-Side Rendering): server render HTML có sẵn dữ liệu rồi
-gửi về, JS "hydrate" (gắn lại tương tác) sau — hiển thị nhanh hơn, SEO tốt
-hơn. SSG (Static Site Generation): HTML được build sẵn lúc deploy, phục vụ
-như file tĩnh — nhanh nhất nhưng dữ liệu không real-time. Web Vitals: LCP
-(Largest Contentful Paint — thời gian phần tử lớn nhất hiển thị), CLS
-(Cumulative Layout Shift — độ "nhảy" layout gây khó chịu), INP (Interaction
-to Next Paint — độ trễ phản hồi khi tương tác).
+**SSR / CSR / SSG, Web Vitals**
+CSR (Client-Side Rendering): browsers download empty HTML shells and execute client JS to construct DOM trees (e.g., `fe-vite`) — fast subsequent interactions, but slower initial page loads and poor SEO indexability. SSR (Server-Side Rendering): servers pre-render HTML with populated data before transmission, followed by client JS hydration — yielding faster first-contentful-paint and superior SEO. SSG (Static Site Generation): HTML pages are pre-built at deploy time as static assets — yielding maximum speed, but lacks real-time data reactivity. Web Vitals: LCP (Largest Contentful Paint — load timing of main page elements), CLS (Cumulative Layout Shift — visual layout stability), INP (Interaction to Next Paint — responsiveness latency).
 
 ## Backend
 
-**REST API design: pagination, filtering, sorting, versioning**
-Pagination chia kết quả lớn thành từng trang (`?page=2&limit=20`) thay vì
-trả hết 1 lần — 2 kiểu: offset (`OFFSET/LIMIT`, đơn giản nhưng chậm ở trang
-sâu) và cursor (dùng giá trị của dòng cuối trang trước làm điểm bắt đầu,
-nhanh hơn với bảng lớn). Filtering/sorting để client tự chọn tập con và thứ
-tự dữ liệu qua query string. Versioning (`/api/v1/todos`) cho phép thay đổi
-breaking change ở version mới mà không phá client đang dùng version cũ.
+**REST API Design: Pagination, Filtering, Sorting, Versioning**
+Pagination breaks large query result sets into pages (`?page=2&limit=20`) — implemented as offset (`OFFSET/LIMIT`, simple but degrades on deep page numbers) or cursor-based pagination (using previous page tail record IDs as seek pointers, performing efficiently on large datasets). Filtering and sorting query strings empower clients to request customized data subsets. Versioning (`/api/v1/todos`) provides breaking-change isolation across client ecosystem updates.
 
-**SQL nâng cao: `EXPLAIN`/`EXPLAIN ANALYZE`, composite index, N+1, transaction**
-`EXPLAIN <query>` cho biết Postgres SẼ chạy query như thế nào (dùng index
-nào, hay quét toàn bảng "Seq Scan") mà KHÔNG thực sự chạy; `EXPLAIN ANALYZE`
-chạy thật và cho thêm thời gian thực tế từng bước. Composite index (index
-trên nhiều cột, vd: `(user_id, completed)`) tối ưu cho query lọc theo CẢ 2
-điều kiện cùng lúc — thứ tự cột trong index quan trọng (index `(a,b)` dùng
-được cho query chỉ lọc `a`, nhưng KHÔNG tối ưu cho query chỉ lọc `b`). N+1
-query là lỗi gọi 1 query lấy danh sách rồi lặp gọi thêm 1 query cho MỖI dòng
-(vd: lấy 100 todo rồi 100 lần query category riêng) thay vì 1 `JOIN` duy
-nhất. Transaction (`BEGIN...COMMIT`/`ROLLBACK`) gộp nhiều câu lệnh thành 1
-đơn vị "tất cả hoặc không gì cả" — nếu 1 câu lệnh giữa chừng lỗi, toàn bộ bị
-hoàn tác, tránh dữ liệu nửa vời.
+**Advanced SQL: `EXPLAIN`/`EXPLAIN ANALYZE`, Composite Indexes, N+1 Queries, Transactions**
+`EXPLAIN <query>` displays Postgres execution query plans (index scanning vs sequential table scans) WITHOUT executing statements; `EXPLAIN ANALYZE` executes queries to measure exact stage execution durations. Composite indexes (multi-column indexes, e.g., `(user_id, completed)`) optimize multi-condition filtering queries — column order matters (an index on `(a, b)` services queries filtering by `a`, but cannot optimize standalone queries filtering only by `b`). N+1 query bugs occur when applications make 1 query for a parent list and subsequently trigger N individual queries for each child row (e.g., fetching 100 todos followed by 100 individual category queries) instead of executing a single unified `JOIN`. Transactions (`BEGIN...COMMIT`/`ROLLBACK`) guarantee atomicity — ensuring failure at any intermediate stage rolls back all preceding writes.
 
-**Auth: JWT vs session trade-off, refresh rotation, revoke**
-JWT (stateless): server không lưu gì, chỉ verify chữ ký — dễ scale ngang
-(mọi instance verify độc lập) nhưng KHÓ thu hồi 1 token đã phát hành trước
-khi nó hết hạn (trừ khi có thêm cơ chế danh sách đen). Session (stateful):
-server lưu trạng thái đăng nhập (ở đây là Postgres qua `connect-pg-simple`)
-— thu hồi tức thì (xoá session), nhưng mỗi request cần tra store, và cần
-store dùng chung nếu chạy nhiều instance. Refresh token rotation: mỗi lần
-dùng refresh token để lấy access token mới, token cũ bị vô hiệu hoá NGAY và
-cấp token mới — nếu 1 token bị đánh cắp và dùng trước chủ sở hữu thật, lần
-dùng tiếp theo của CHỦ SỞ HỮU THẬT sẽ thất bại (token đã bị dùng/revoke),
-tạo tín hiệu phát hiện bị đánh cắp (reuse detection). Xem
-[`src/services/auth.service.ts`](../../be-node-express/src/services/auth.service.ts).
+**Auth: JWT vs Session Tradeoffs, Refresh Rotation, Revocation**
+JWT (stateless): servers hold no session state, validating cryptographic signatures independently — facilitating horizontal scaling, but complicating immediate token revocation before expiration (unless backed by blacklists). Session (stateful): servers persist session records (e.g., Postgres via `connect-pg-simple`) — enabling instant revocation by destroying session records, but requiring database lookup checks per request and shared session stores across scaled instances. Refresh token rotation: utilizing a refresh token to request new access tokens immediately invalidates the used refresh token and issues a new pair — if a token is stolen and used by an attacker, subsequent requests by the legitimate owner fail (due to token invalidation), triggering automatic reuse detection flags. See [`src/services/auth.service.ts`](../../be-node-express/src/services/auth.service.ts).
 
-**Testing: unit test service (mock repository), integration test (`supertest`)**
-Unit test service kiểm tra LOGIC nghiệp vụ độc lập với DB thật — "giả"
-(mock) hàm repository trả về dữ liệu cố định, để test chạy nhanh và không
-phụ thuộc trạng thái DB. Integration test bằng `supertest` gửi request thật
-tới Express `app` (không cần server chạy thật, `supertest` tự tạo server
-tạm) và kiểm tra toàn bộ luồng route → middleware → controller → DB thật
-(thường là DB test riêng, dọn dẹp sau mỗi test).
+**Testing: Service Layer Unit Tests (Mock Repositories), Integration Tests (`supertest`)**
+Service unit tests validate core domain logic in isolation from databases — mocking repository return values to maintain rapid, deterministic execution. Integration tests using `supertest` send HTTP requests directly to Express application instances (spawning ephemeral servers), verifying end-to-end routing → middleware → controller → database integration (typically against isolated test databases reset between test runs).
 
-**Migration tool có version**
-Thay vì 1 file SQL chạy 1 lần lúc tạo DB (`init.sql`), migration tool ghi
-lại LỊCH SỬ thay đổi schema dưới dạng nhiều file có thứ tự (`0001_init.sql`,
-`0002_add_priority.sql`, ...), mỗi file có `up` (áp dụng) và `down` (hoàn
-tác). Cho phép: review thay đổi schema qua PR như code, áp dụng migration
-mới lên DB đang chạy mà KHÔNG mất dữ liệu, và rollback nếu migration mới có
-lỗi.
+**Versioned Database Migrations**
+Moving beyond static SQL files (`init.sql`), migration frameworks track schema evolution via sequential files (`0001_init.sql`, `0002_add_priority.sql`), providing explicit `up` (apply) and `down` (rollback) paths. This enables schema change code reviews via pull requests, zero-downtime database migrations, and safe rollbacks during failed deployments.
 
-**Caching cơ bản: Redis, cache invalidation**
-Redis là key-value store trong bộ nhớ (RAM), đọc/ghi cực nhanh so với query
-Postgres từ đĩa. Dùng cho dữ liệu đọc nhiều/ghi ít (vd: `/api/todos/stats`)
-— lần đầu tính từ DB rồi lưu vào Redis với thời gian sống (TTL), các lần
-sau đọc thẳng từ Redis. "Cache invalidation" (thường được coi là 1 trong 2
-việc khó nhất của lập trình) là biết CHÍNH XÁC khi nào phải xoá/cập nhật
-cache đó — ở đây là mỗi khi có todo trong category thay đổi, nếu không
-người dùng thấy số liệu cũ.
+**Basic Caching: Redis, Cache Invalidation**
+Redis acts as an in-memory key-value store providing high-speed read/write performance compared to disk-bound PostgreSQL queries. Used for read-heavy/write-light endpoints (e.g., `/api/todos/stats`), computing initial aggregates from Postgres and storing results in Redis with time-to-live (TTL) expiration. Cache invalidation requires purging/updating cached data whenever underlying todo entries mutate, ensuring stale metrics are never served.
 
 ## DevOps
 
-**Multi-stage Docker build**
-1 `Dockerfile` có nhiều `FROM` (nhiều "stage") — stage đầu (`builder`) cài
-đủ `devDependencies`, chạy `tsc` build TypeScript ra JavaScript; stage cuối
-chỉ `COPY --from=builder` lấy đúng file `dist/` đã build, cài
-`npm install --only=production` (không có TypeScript, không có
-`devDependencies`). Kết quả: image production nhỏ hơn nhiều, giảm diện tấn
-công (ít package hơn = ít lỗ hổng tiềm ẩn hơn).
+**Multi-stage Docker Build**
+Utilizing multiple `FROM` stages inside a single `Dockerfile` — an initial `builder` stage installs complete `devDependencies` and compiles TypeScript to JavaScript; the final stage copies compiled `dist/` outputs via `COPY --from=builder` and installs runtime dependencies via `npm install --only=production`. This yields lightweight production container images, reducing attack surface area.
 
-**CI pipeline thực tế: lint + type-check + test, cache dependencies**
-"Build check" (chỉ `npm run build`) chỉ phát hiện lỗi cú pháp/kiểu, KHÔNG
-phát hiện logic sai (cần test) hay style không nhất quán (cần lint). CI nên
-chạy cả 3: `eslint`, `tsc --noEmit`, `npm test`. Cache
-(`actions/cache` với key theo `package-lock.json`) lưu `node_modules` giữa
-các lần chạy CI — nếu dependency không đổi, khỏi cần tải lại từ npm registry,
-tiết kiệm vài chục giây tới vài phút mỗi lần chạy.
+**Realistic CI Pipeline: Lint + Type-check + Test, Dependency Caching**
+Basic "build checks" (`npm run build`) only detect syntax and type errors, missing runtime logic failures (requiring unit tests) and style inconsistencies (requiring linters). Robust CI pipelines run `eslint`, `tsc --noEmit`, and `npm test` sequentially. Dependency caching (`actions/cache` keyed on `package-lock.json`) persists `node_modules` across pipeline runs, speeding up workflow execution time.
 
-**Tách biệt config theo môi trường**
-Dev/staging/production nên có secret, connection string, feature flag khác
-nhau — dùng CHUNG 1 file `.env` là rủi ro (vd: test trên staging vô tình
-xoá dữ liệu production nếu nhầm `DATABASE_URL`). Best practice: mỗi môi
-trường có biến môi trường riêng (qua CI secrets, hoặc secrets manager), file
-`.env` chỉ dùng cho local dev.
+**Environmental Config Separation**
+Dev, staging, and production environments require isolated database credentials, secrets, and feature flags — sharing `.env` files introduces operational risk (e.g., staging tests accidentally dropping production databases). Best practice enforces isolated environment variables via CI secrets or dedicated secrets managers, reserving `.env` files exclusively for local development.
 
-**Health check endpoint và `HEALTHCHECK`**
-`GET /health` trả `200 OK` đơn giản để hệ thống bên ngoài (load balancer,
-container orchestrator) biết service còn sống. `HEALTHCHECK` trong
-`Dockerfile` khai báo lệnh Docker tự gọi định kỳ để đánh dấu container là
-"healthy"/"unhealthy" — orchestrator dựa vào đó để quyết định có route
-traffic vào container này hay tự khởi động lại nó không.
+**Health Check Endpoints and `HEALTHCHECK`**
+`GET /health` endpoints return standard `200 OK` statuses indicating service availability to external load balancers and orchestrators. Dockerfile `HEALTHCHECK` instructions execute periodic health checks inside containers to flag instances as healthy/unhealthy — empowering orchestrators to route traffic safely or restart unhealthy containers automatically.
 
 ## Security
 
-**JWT best practices: access ngắn hạn, refresh rotation, secret không hardcode**
-Access token sống ngắn (vd: 15 phút) để nếu bị đánh cắp, cửa sổ khai thác
-hẹp; refresh token sống dài hơn nhưng có rotation (xem phần Backend ở trên)
-để giảm rủi ro further. Secret KHÔNG được hardcode trong source (dù chỉ là
-giá trị "tạm" lúc dev) vì source thường lên Git — dùng biến môi trường, và ở
-production PHẢI là giá trị ngẫu nhiên đủ dài, không phải giá trị mặc định
-kiểu `dev-access-secret-change-me`.
+**JWT Best Practices: Short-lived Access Tokens, Refresh Rotation, Externalized Secrets**
+Short access token lifetimes (e.g., 15 minutes) limit vulnerability exposure windows if tokens are intercepted; refresh tokens paired with rotation mechanisms mitigate long-term replay risk. Cryptographic secrets must NEVER be hardcoded into source control repositories — requiring environment variable injection, with production environments enforcing strong, cryptographically random strings.
 
-**Rate limiting chống brute-force**
-Giới hạn số request/khoảng thời gian theo IP hoặc user (vd: 20
-request/15 phút cho `/api/auth/login`) — nếu không có, attacker thử hàng
-triệu password/giây tới khi đúng (brute-force). Xem
-[`src/middleware/rateLimiter.ts`](../../be-node-express/src/middleware/rateLimiter.ts).
+**Rate Limiting against Brute-Force Attacks**
+Restricting request volume per IP/user within fixed time windows (e.g., 20 requests / 15 minutes on `/api/auth/login`) prevents automated dictionary brute-force attacks. See [`src/middleware/rateLimiter.ts`](../../be-node-express/src/middleware/rateLimiter.ts).
 
-**OWASP Top 10 áp dụng thực tế**
-Danh sách 10 rủi ro bảo mật web phổ biến nhất, cập nhật định kỳ bởi OWASP.
-3 mục hay gặp nhất trong CRUD app: Injection (SQL injection — xem Level 2),
-Broken Authentication (session/token quản lý sai, session không hết hạn,
-không rate-limit login), Sensitive Data Exposure (trả về password hash
-trong API response, log secret ra console). "Áp dụng thực tế" nghĩa là chỉ
-RA ĐƯỢC ví dụ cụ thể trong chính codebase đang làm, không phải học thuộc
-tên 10 mục.
+**OWASP Top 10 in Practice**
+The OWASP Top 10 documents critical web application security risks. Key areas in CRUD applications include Injection (SQL injection), Broken Authentication (flawed session management, missing rate limits), and Sensitive Data Exposure (leaking password hashes in API responses, logging secrets). Practical application requires identifying and remediating specific vulnerability patterns within actual codebase implementations.
 
-**Dependency vulnerability scanning**
-Package bên thứ 3 (kể cả dependency của dependency — "transitive") có thể
-chứa lỗ hổng đã biết (CVE). `npm audit` liệt kê lỗ hổng trong cây dependency
-hiện tại. Dependabot/Renovate tự động quét định kỳ và tạo Pull Request nâng
-cấp package khi có CVE mới — không cần nhớ tự chạy `npm audit` thủ công.
+**Dependency Vulnerability Scanning**
+Third-party dependencies (including transitive dependencies) may contain known vulnerabilities (CVEs). `npm audit` scans project dependency trees against vulnerability databases. Automated tools like Dependabot and Renovate continuously scan repositories and submit automated pull requests to patch vulnerable dependencies.
 
-**CSRF và vì sao session cần quan tâm nhiều hơn JWT qua header**
-CSRF (Cross-Site Request Forgery): trang web độc hại B khiến trình duyệt
-người dùng tự động gửi request tới trang A mà người dùng đang đăng nhập
-(cookie tự động đính kèm bởi trình duyệt) — A xử lý như request hợp lệ vì
-cookie hợp lệ. JWT gửi qua header `Authorization` KHÔNG tự động đính kèm
-bởi trình duyệt (JS phải chủ động set) nên ít rủi ro CSRF hơn. Session dùng
-cookie nên rủi ro cao hơn — giảm thiểu bằng `SameSite=Lax/Strict` (chặn
-cookie gửi kèm request cross-site) và/hoặc CSRF token riêng.
+**CSRF and Session-based Authentication vs Header JWTs**
+CSRF (Cross-Site Request Forgery) attacks exploit automatic browser cookie transmission to issue unauthorized requests from malicious sites to authenticated applications. Header-based JWT authentication requires explicit JavaScript header attachment, significantly mitigating CSRF risk. Session-based cookie authentication requires strict CSRF defenses such as `SameSite=Lax/Strict` cookie attributes and explicit anti-CSRF tokens.

@@ -1,128 +1,63 @@
-# Level 1 — Đáp án / Giải thích chi tiết
+# Level 1 — Answers / Detailed Explanations
 
-File này giải thích **từng gạch đầu dòng** trong phần "Yêu cầu" của
-[level-1-fresher.md](level-1-fresher.md). Đọc song song 2 file: file kia nói
-"cần biết gì", file này trả lời "nó là gì, vì sao cần, và ví dụ ra sao".
+This file explains **each bullet point** from the "Requirements" section of [level-1-fresher.md](level-1-fresher.md). Read both files in parallel: that file states "what you need to know", while this file answers "what it is, why it is needed, and concrete examples".
 
 ## Frontend
 
-**HTML ngữ nghĩa (semantic tags), CSS cơ bản (box model, Flexbox)**
-"Ngữ nghĩa" nghĩa là dùng đúng tag cho đúng ý nghĩa nội dung thay vì `<div>`
-cho mọi thứ — `<nav>`, `<header>`, `<button>`, `<ul><li>` giúp trình duyệt,
-công cụ tìm kiếm, và screen reader hiểu cấu trúc trang mà không cần đọc CSS.
-Box model là quy tắc trình duyệt tính kích thước 1 phần tử:
-`content + padding + border + margin`. Flexbox là mô hình layout 1 chiều
-(hàng hoặc cột) dùng `display: flex` — thay thế cách canh giữa/khoảng cách
-thủ công bằng `float`/`position` trước đây.
+**Semantic HTML tags, basic CSS (box model, Flexbox)**
+"Semantic" means using the correct tag according to the meaning of the content instead of using `<div>` for everything — tags like `<nav>`, `<header>`, `<button>`, `<ul><li>` help browsers, search engines, and screen readers understand the page structure without parsing CSS.
+The box model is the browser rule for calculating an element's size: `content + padding + border + margin`. Flexbox is a 1-dimensional layout model (rows or columns) using `display: flex` — replacing old manual centering/spacing methods using `float`/`position`.
 
-**JavaScript nền tảng**
-- `var` có function scope và bị hoisting kỳ lạ (dùng được trước khi khai
-  báo, giá trị `undefined`) — hầu như không nên dùng nữa.
-- `let`/`const` có block scope (`{}`), an toàn hơn; `const` không cho gán
-  lại tên biến (nhưng object/array bên trong vẫn đổi được).
-- `map` trả về mảng mới cùng độ dài (biến đổi từng phần tử), `filter` trả
-  về mảng con thoả điều kiện, `reduce` gộp mảng thành 1 giá trị (tổng, object,
-  v.v.) — 3 hàm này là nền tảng để xử lý dữ liệu mà không cần vòng `for` thủ
-  công.
-- Arrow function (`() => {}`) không có `this` riêng — nó dùng `this` của
-  scope bao ngoài, khác với `function` thường tự tạo `this` riêng. Đây là lý
-  do component class-based React cũ hay bug khi quên `.bind(this)`.
+**JavaScript Fundamentals**
+- `var` has function scope and exhibits strange hoisting behavior (accessible before declaration with an `undefined` value) — it should virtually never be used anymore.
+- `let`/`const` have block scope (`{}`), which is safer; `const` prevents re-assigning the variable binding (though properties of objects/arrays inside can still be mutated).
+- `map` returns a new array of the same length (transforming each element), `filter` returns a subarray meeting a condition, `reduce` aggregates an array into a single value (total, object, etc.) — these 3 functions are fundamental for data processing without manual `for` loops.
+- Arrow functions (`() => {}`) do not have their own `this` binding — they inherit `this` from the enclosing lexical scope, unlike traditional `function` declarations which bind their own `this`. This is why older class-based React components often had bugs when forgetting `.bind(this)`.
 
-**React cơ bản: component, props, `useState`, `useEffect` đơn giản**
-Component là 1 hàm JavaScript trả về JSX (giao diện). Props là dữ liệu
-component cha truyền xuống con, chỉ đọc (component con không tự sửa props).
-`useState(initial)` trả về `[value, setValue]` — gọi `setValue` làm React
-lên lịch render lại component với `value` mới; state không đổi ngay lập tức
-(bất đồng bộ). `useEffect(fn, deps)` chạy `fn` sau khi component render
-xong — dùng cho side-effect như gọi API; ở Level 1 chỉ cần biết
-`useEffect(fn, [])` chạy đúng 1 lần sau lần render đầu.
+**Basic React: component, props, `useState`, simple `useEffect`**
+A component is a JavaScript function that returns JSX (the UI). Props are data passed down from a parent component to a child, and are read-only (child components cannot mutate props).
+`useState(initial)` returns `[value, setValue]` — calling `setValue` schedules React to re-render the component with the new `value`; state does not change synchronously. `useEffect(fn, deps)` runs `fn` after the component finishes rendering — used for side effects like API calls; at Level 1, you only need to know that `useEffect(fn, [])` runs exactly once after the initial render.
 
-**Gọi API cơ bản bằng `fetch`/`axios`, loading/error state**
-`fetch(url)` trả về Promise; phải `.then(res => res.json())` để lấy dữ liệu
-thật (bước 1 chỉ lấy được response object, chưa parse body). `axios` làm
-việc này gọn hơn (`axios.get(url).then(res => res.data)`) và tự parse JSON,
-tự throw lỗi khi status không phải 2xx (khác `fetch`, `fetch` không tự
-reject khi gặp 404/500). "Loading state" là biến `boolean` báo đang chờ kết
-quả để hiện spinner; "error state" lưu lỗi để hiện thông báo thay vì màn
-hình trắng khi API fail.
+**Basic API calls using `fetch`/`axios`, loading/error states**
+`fetch(url)` returns a Promise; you must call `.then(res => res.json())` to obtain the parsed data (step 1 only returns the HTTP response object, not the parsed body). `axios` simplifies this (`axios.get(url).then(res => res.data)`), automatically parses JSON, and automatically throws errors when the status is non-2xx (unlike `fetch`, which does not reject on 404/500). "Loading state" is a `boolean` tracking pending requests to show a spinner; "error state" captures error details to display notification messages instead of a blank white screen when an API call fails.
 
-**Git cơ bản**
-`clone` tải repo về máy; `add` đưa file vào "staging area" (chuẩn bị commit);
-`commit` lưu 1 snapshot có message; `push` đẩy commit lên remote; `pull` kéo
-commit mới từ remote về và merge vào branch hiện tại. Branch là 1 nhánh
-lịch sử độc lập để làm việc song song mà không ảnh hưởng `main`.
+**Git Fundamentals**
+`clone` downloads a repo locally; `add` stages files for commit; `commit` saves a snapshot with a message; `push` uploads commits to a remote repository; `pull` fetches new commits from the remote and merges them into the current branch. A branch is an independent line of development to work in parallel without affecting `main`.
 
 ## Backend
 
-**Viết được 1 REST API CRUD đơn giản với Express**
-CRUD = Create/Read/Update/Delete, ánh xạ sang HTTP method
-`POST/GET/PATCH(hoặc PUT)/DELETE`. Express là framework HTTP cho Node.js:
-`app.get('/api/todos', (req, res) => {...})` đăng ký 1 route handler — hàm
-này nhận `req` (thông tin request: params, query, body) và `res` (để trả
-response). Ở Level 1, route handler gọi thẳng DB, chưa cần tách file riêng.
+**Writing a simple Express CRUD REST API**
+CRUD = Create/Read/Update/Delete, mapping directly to HTTP methods `POST/GET/PATCH(or PUT)/DELETE`. Express is an HTTP framework for Node.js: `app.get('/api/todos', (req, res) => {...})` registers a route handler function that receives `req` (request params, query, body) and `res` (to construct the response). At Level 1, the route handler interacts directly with the DB without separate layers.
 
-**SQL cơ bản**
-`SELECT cols FROM table WHERE condition` đọc dữ liệu; `INSERT INTO table
-(cols) VALUES (...)` thêm dòng mới; `UPDATE table SET col = value WHERE
-condition` sửa; `DELETE FROM table WHERE condition` xoá. **Luôn có `WHERE`
-khi `UPDATE`/`DELETE`** — quên `WHERE` nghĩa là áp dụng cho TOÀN BỘ bảng.
-Primary Key là cột (hoặc tổ hợp cột) định danh duy nhất 1 dòng — trong
-`todo-app`, `todos.id SERIAL PRIMARY KEY` tự tăng và không trùng.
+**Basic SQL**
+`SELECT cols FROM table WHERE condition` reads data; `INSERT INTO table (cols) VALUES (...)` inserts new rows; `UPDATE table SET col = value WHERE condition` updates data; `DELETE FROM table WHERE condition` deletes rows. **Always include a `WHERE` clause when using `UPDATE`/`DELETE`** — omitting `WHERE` applies the operation to the ENTIRE table.
+A Primary Key is a column (or composite columns) that uniquely identifies a row — in `todo-app`, `todos.id SERIAL PRIMARY KEY` auto-increments and ensures uniqueness.
 
-**HTTP method & status code**
-`GET` = đọc, không thay đổi dữ liệu (idempotent — gọi nhiều lần kết quả như
-nhau); `POST` = tạo mới, KHÔNG idempotent (gọi 2 lần tạo 2 dòng); `PATCH` =
-sửa 1 phần dữ liệu; `PUT` = thay thế toàn bộ resource (ít dùng hơn `PATCH`
-trong thực tế); `DELETE` = xoá. Status code: `2xx` thành công (`200` OK,
-`201` Created — dùng sau `POST` tạo thành công); `4xx` lỗi do client
-(`400` request sai định dạng, `401` chưa đăng nhập, `404` không tìm thấy);
-`5xx` lỗi do server (`500` lỗi không lường trước).
+**HTTP Methods & Status Codes**
+`GET` = read, does not modify data (idempotent — multiple identical requests yield the same result); `POST` = create, NOT idempotent (calling twice creates two records); `PATCH` = partial update; `PUT` = replace entire resource (less common than `PATCH` in practice); `DELETE` = remove resource.
+Status codes: `2xx` success (`200` OK, `201` Created — used after successful `POST`); `4xx` client error (`400` malformed request, `401` unauthorized, `404` not found); `5xx` server error (`500` unexpected internal server error).
 
 **`.env`**
-File chứa biến môi trường (`DATABASE_URL`, `PORT`, ...) đọc lúc chạy chương
-trình thay vì hardcode trong source — cho phép dùng giá trị khác nhau giữa
-máy dev, CI, và production **mà không sửa code**. Thư viện `dotenv` đọc file
-`.env` và gán vào `process.env` khi gọi `dotenv.config()`.
+A file containing environment variables (`DATABASE_URL`, `PORT`, ...) read at application runtime instead of hardcoding values in source code — allowing different configurations across dev, CI, and production **without changing code**. The `dotenv` library loads `.env` variables into `process.env` when calling `dotenv.config()`.
 
 ## DevOps
 
-**Docker cơ bản: `build`/`run`/`ps`/`logs`, image vs container**
-Image là 1 bản snapshot bất biến (filesystem + config) được build từ
-`Dockerfile` — giống như 1 "class". Container là 1 instance đang chạy của
-image đó — giống như 1 "object" được tạo từ class. `docker build -t name .`
-tạo image; `docker run name` khởi chạy 1 container từ image; `docker ps`
-liệt kê container đang chạy; `docker logs <container>` xem output/log của
-nó.
+**Basic Docker: `build`/`run`/`ps`/`logs`, image vs container**
+An image is an immutable snapshot (filesystem + config) built from a `Dockerfile` — akin to a "class". A container is a running instance of that image — akin to an "object" instantiated from that class. `docker build -t name .` builds an image; `docker run name` runs a container from the image; `docker ps` lists running containers; `docker logs <container>` views container output/logs.
 
-**Đọc hiểu 1 `Dockerfile` đơn giản**
-Mỗi dòng là 1 "layer": `FROM node:18-alpine` chọn base image; `WORKDIR /app`
-đặt thư mục làm việc trong container; `COPY . .` copy code vào image;
-`RUN npm install` chạy lệnh lúc BUILD image (kết quả được lưu vào layer);
-`CMD [...]` là lệnh chạy khi container KHỞI ĐỘNG (khác `RUN`, chỉ chạy 1 lần
-lúc container start, không lưu vào image).
+**Reading a simple `Dockerfile`**
+Each instruction creates a "layer": `FROM node:18-alpine` sets the base image; `WORKDIR /app` sets the working directory inside the container; `COPY . .` copies source code into the image; `RUN npm install` executes commands during image BUILD (persisting results to the layer); `CMD [...]` specifies the default command executed when the container STARTS (unlike `RUN`, it executes every time the container starts and is not saved into the image layers).
 
-**`docker-compose up` chạy nhiều service cùng lúc**
-`docker-compose.yml` định nghĩa nhiều container (vd: `db`, `be-node-express`)
-và cách chúng nói chuyện với nhau qua 1 network chung — mỗi service gọi
-service khác bằng TÊN service (vd: `be-node-express` kết nối DB qua host
-`db`, không phải `localhost`) thay vì IP.
+**`docker-compose up` running multiple services**
+`docker-compose.yml` defines multiple containers (e.g., `db`, `be-node-express`) and how they communicate over a shared network — services address each other by SERVICE NAME (e.g., `be-node-express` connects to the database via host `db`, not `localhost`) rather than hardcoded IP addresses.
 
 ## Security
 
-**Không lưu password dạng plaintext**
-Nếu database bị lộ (leak/breach), password dạng plaintext = mọi tài khoản
-người dùng bị lộ ngay lập tức, và vì nhiều người dùng lại 1 password cho
-nhiều nơi, hệ quả lan sang cả các dịch vụ khác. Ở Level 1 chỉ cần biết
-**đây là sai**, cách làm đúng (hash bằng `bcrypt`) học ở Level 2.
+**Never storing passwords in plaintext**
+If a database is leaked/compromised, plaintext passwords expose every user account immediately. Since users frequently reuse passwords across sites, the security breach cascades to other services. At Level 1, you simply need to recognize **this is wrong**; proper hashing (`bcrypt`) is covered in Level 2.
 
-**Không commit `.env`/secrets lên Git**
-Git lưu lịch sử vĩnh viễn — dù xoá file ở commit sau, secret vẫn còn trong
-lịch sử commit cũ và ai clone repo cũng thấy được. `.gitignore` liệt kê
-file/thư mục Git bỏ qua khi `git add`; `.env` luôn phải nằm trong đó, chỉ
-commit `.env.example` (có tên biến, không có giá trị thật).
+**Never committing `.env`/secrets to Git**
+Git preserves complete, permanent history — even if a secret file is deleted in a later commit, it remains in git history for anyone who clones the repo. `.gitignore` specifies files/directories Git should ignore when running `git add`; `.env` must always be ignored, committing only `.env.example` (containing variable names without real values).
 
 **HTTPS vs HTTP**
-HTTP gửi dữ liệu dạng plaintext qua mạng — ai chặn được gói tin (vd: cùng
-Wi-Fi công cộng) đọc được toàn bộ nội dung, kể cả password gõ trong form
-login. HTTPS mã hoá dữ liệu bằng TLS trước khi gửi đi — kẻ chặn giữa đường
-chỉ thấy dữ liệu đã mã hoá, không đọc được nội dung thật.
+HTTP transmits data in plaintext across networks — anyone capturing packets (e.g., on public Wi-Fi) can inspect all traffic, including credentials entered into login forms. HTTPS encrypts data via TLS before transmission — eavesdroppers only see encrypted cipher data, protecting sensitive contents.

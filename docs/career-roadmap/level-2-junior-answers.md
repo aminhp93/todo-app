@@ -1,150 +1,66 @@
-# Level 2 — Đáp án / Giải thích chi tiết
+# Level 2 — Answers / Detailed Explanations
 
-Giải thích từng gạch đầu dòng trong [level-2-junior.md](level-2-junior.md).
+Explanations for each bullet point in [level-2-junior.md](level-2-junior.md).
 
 ## Frontend
 
-**Hiểu đúng dependency array của `useEffect`, tránh infinite loop/stale closure**
-Dependency array (`[a, b]` trong `useEffect(fn, [a, b])`) báo React "chỉ
-chạy lại `fn` khi `a` hoặc `b` đổi". Bỏ trống `[]` = chạy 1 lần; bỏ hẳn mảng
-= chạy sau MỌI lần render (thường là lỗi). Infinite loop kinh điển: `useEffect`
-gọi `setState` mà state đó lại nằm trong dependency array và thay đổi mỗi
-lần chạy → effect chạy lại → set lại state → lặp vô hạn. "Stale closure" là
-khi hàm bên trong effect "nhớ" giá trị biến tại thời điểm effect được tạo,
-không phải giá trị mới nhất — xảy ra khi thiếu biến đó trong dependency
-array.
+**Understanding `useEffect` dependency arrays, avoiding infinite loops / stale closures**
+The dependency array (`[a, b]` in `useEffect(fn, [a, b])`) instructs React: "only re-run `fn` when `a` or `b` changes". Passing an empty array `[]` = run once after initial render; omitting the array entirely = run after EVERY render (usually a bug). A classic infinite loop occurs when `useEffect` calls `setState`, and that state variable is included in the dependency array or causes a re-render that triggers the effect again. A "stale closure" happens when a function inside an effect captures variable values from the render scope when the effect was created rather than receiving updated values — caused by omitting that variable from the dependency array.
 
-**Tách component con hợp lý, props có kiểu**
-Tách 1 component lớn thành nhiều component nhỏ hơn (vd: `TodoList` chứa
-nhiều `TodoItem`) giúp mỗi phần dễ test, dễ tái sử dụng, và React chỉ
-re-render đúng phần thay đổi thay vì cả cây. Props có kiểu (TypeScript
-`interface Props { title: string; onToggle: (id: number) => void }`) giúp
-compiler báo lỗi ngay khi truyền sai kiểu dữ liệu, thay vì lỗi runtime khó
-tìm.
+**Logical child component decomposition, typed props**
+Decomposing a large single component into smaller subcomponents (e.g., `TodoList` rendering multiple `TodoItem` components) makes each part easier to test, reuse, and allows React to re-render only the affected sub-tree. Typed props (TypeScript `interface Props { title: string; onToggle: (id: number) => void }`) catch invalid prop types at compile-time rather than runtime.
 
-**Quản lý form: controlled input, validate cơ bản**
-"Controlled input" nghĩa là giá trị input do React state quản lý
-(`value={title} onChange={e => setTitle(e.target.value)}`) — React luôn
-biết giá trị hiện tại, khác với "uncontrolled" (để DOM tự giữ giá trị, đọc
-qua `ref` khi cần). Validate cơ bản: kiểm tra bắt buộc (`title.trim() !== ''`),
-độ dài (`title.length <= 255`) TRƯỚC khi gọi API, để phản hồi người dùng
-ngay thay vì chờ lỗi từ server.
+**Form management: controlled inputs, basic validation**
+A "controlled input" means the input value is driven by React state (`value={title} onChange={e => setTitle(e.target.value)}`) — React retains full control of current state, unlike "uncontrolled inputs" (where the DOM manages state, accessed via `ref` when submitted). Basic validation checks required fields (`title.trim() !== ''`) and max length (`title.length <= 255`) BEFORE making API calls to provide instant UI feedback without waiting for server errors.
 
 **CSS framework (Tailwind), responsive design**
-Tailwind cung cấp class tiện ích áp trực tiếp trong JSX (`className="flex
-gap-2 p-4"`) thay vì viết file CSS riêng — tốc độ code nhanh hơn, không cần
-đặt tên class. Responsive/mobile-first nghĩa là style mặc định cho màn hình
-nhỏ trước, rồi thêm breakpoint (`md:`, `lg:`) để mở rộng cho màn hình lớn
-hơn — Tailwind mặc định theo hướng này.
+Tailwind provides utility classes applied directly within JSX (`className="flex gap-2 p-4"`) instead of writing separate CSS stylesheets — speeding up development without class-naming friction. Responsive/mobile-first design styles small mobile screens by default, using media breakpoint prefixes (`md:`, `lg:`) to adapt layouts for larger viewports — Tailwind enforces this mobile-first paradigm by design.
 
 **`useMemo`/`useCallback`**
-`useMemo(fn, deps)` chỉ tính lại giá trị khi `deps` đổi — tránh tính toán
-nặng lặp lại mỗi render. `useCallback(fn, deps)` tương tự nhưng cho HÀM (giữ
-cùng 1 reference hàm giữa các lần render nếu `deps` không đổi) — hữu ích khi
-truyền hàm xuống component con được bọc `React.memo`, vì nếu không, hàm mới
-được tạo mỗi render khiến `React.memo` không có tác dụng.
+`useMemo(fn, deps)` recomputes a memoized value only when `deps` change — preventing expensive calculations on every render. `useCallback(fn, deps)` does the same specifically for FUNCTIONS (preserving referential equality across renders when `deps` remain unchanged) — essential when passing callbacks to child components optimized with `React.memo`, preventing unnecessary re-renders.
 
 ## Backend
 
-**Tách kiến trúc cơ bản: routes → controller**
-Route định nghĩa "URL nào gọi hàm nào" (`router.get('/todos', todoController.list)`);
-controller chứa logic xử lý request/response. Tách 2 lớp này giúp file route
-dễ đọc (chỉ thấy danh sách endpoint), và controller có thể test/tái sử dụng
-độc lập với việc URL là gì.
+**Basic architectural separation: routes → controller**
+Routes define "which URL triggers which handler" (`router.get('/todos', todoController.list)`); controllers contain request/response processing logic. Decoupling routes from controllers keeps route definitions clean and readable (a plain list of endpoints) while keeping controllers independently testable and decoupled from URL paths.
 
-**Validate input bằng thư viện (`zod`/`joi`)**
-Thay vì viết tay từng `if (!title) return res.status(400)...`, khai báo 1
-schema (`z.object({ title: z.string().min(1) })`) rồi gọi `schema.parse(body)`
-— tự động kiểm tra đủ điều kiện, throw lỗi rõ ràng nếu sai, và tránh bỏ sót
-field khi API phức tạp dần. Xem [`src/schemas/todo.schema.ts`](../../be-node-express/src/schemas/todo.schema.ts).
+**Input validation using libraries (`zod`/`joi`)**
+Instead of manually writing `if (!title) return res.status(400)...`, declare a schema (`z.object({ title: z.string().min(1) })`) and invoke `schema.parse(body)` — automatically enforcing data contracts, throwing standardized validation errors, and avoiding unhandled input fields as APIs grow in complexity. See [`src/schemas/todo.schema.ts`](../../be-node-express/src/schemas/todo.schema.ts).
 
-**Middleware xử lý lỗi tập trung**
-Middleware là hàm `(req, res, next)` chạy trước/sau route handler. 1
-middleware lỗi đặt ở CUỐI app (`app.use(errorHandler)`) bắt mọi lỗi được
-`next(err)` hoặc throw từ route/middleware trước đó, trả response lỗi thống
-nhất (1 format JSON) — thay vì mỗi route tự viết `try/catch` và tự quyết
-định format lỗi khác nhau. Xem
-[`src/middleware/errorHandler.ts`](../../be-node-express/src/middleware/errorHandler.ts).
+**Centralized error handling middleware**
+Middleware functions `(req, res, next)` execute before or after route handlers. A centralized error handling middleware placed at the END of the Express pipeline (`app.use(errorHandler)`) catches all errors passed via `next(err)` or thrown from preceding routes/middlewares, formatting unified error JSON responses — replacing fragmented `try/catch` blocks scattered across routes. See [`src/middleware/errorHandler.ts`](../../be-node-express/src/middleware/errorHandler.ts).
 
-**Authentication cơ bản: hash password (`bcrypt`), JWT sign/verify**
-`bcrypt.hash(password, saltRounds)` biến password thành chuỗi hash 1 chiều
-(không thể đảo ngược lại password gốc); `bcrypt.compare(input, hash)` so
-sánh mà không cần biết password gốc. JWT (JSON Web Token) là 1 chuỗi gồm 3
-phần `header.payload.signature`, server "ký" bằng 1 secret — client giữ
-token, gửi lại trong header `Authorization: Bearer <token>` mỗi request;
-server chỉ cần verify chữ ký (không cần tra DB) để biết token hợp lệ và lấy
-thông tin user từ payload.
+**Basic Authentication: password hashing (`bcrypt`), JWT sign/verify**
+`bcrypt.hash(password, saltRounds)` converts a password into a 1-way cryptographic hash (irreversible to the original password); `bcrypt.compare(input, hash)` validates user input without ever needing to know the original plaintext password. JWT (JSON Web Token) is a 3-part string `header.payload.signature` signed by the server using a secret key — clients store the token and attach it in the `Authorization: Bearer <token>` header on subsequent requests; the server verifies the cryptographic signature without querying the database for every single request.
 
-**SQL: `JOIN`, Foreign Key, `INDEX`**
-`JOIN` gộp dữ liệu từ 2 bảng theo điều kiện liên kết (vd:
-`todos LEFT JOIN categories ON categories.id = todos.category_id`) — lấy
-tên category cùng lúc với todo mà không cần 2 query riêng. Foreign Key là
-ràng buộc đảm bảo giá trị 1 cột phải tồn tại ở bảng khác (vd:
-`todos.category_id` phải là 1 `id` có thật trong `categories`) — DB tự
-chặn nếu vi phạm. Index là cấu trúc dữ liệu phụ (thường B-tree) giúp
-database tìm dòng nhanh hơn theo 1 cột, đổi lại tốn thêm dung lượng và làm
-chậm `INSERT`/`UPDATE` (vì phải cập nhật cả index).
+**SQL: `JOIN`, Foreign Keys, `INDEX`**
+`JOIN` combines rows from two or more tables based on a related column (e.g., `todos LEFT JOIN categories ON categories.id = todos.category_id`) — retrieving category names alongside todos in a single query. A Foreign Key is a constraint ensuring column values reference existing records in another table (e.g., `todos.category_id` must match a valid `id` in `categories`) — enforced automatically by the relational database engine. An Index is a secondary data structure (typically a B-tree) enabling fast lookup speeds for indexed columns, at the cost of additional storage overhead and slightly slower `INSERT`/`UPDATE` operations (since index trees must be updated).
 
 ## DevOps
 
-**Tự viết `Dockerfile` 1 stage cho Node.js**
-Cấu trúc tối thiểu: `FROM node:18-alpine` → `WORKDIR /app` →
-`COPY package*.json ./` → `RUN npm install` → `COPY . .` →
-`CMD ["node", "index.js"]`. Copy `package*.json` TRƯỚC rồi mới `npm install`
-(thay vì copy hết source rồi mới install) để Docker cache được layer
-`npm install` — nếu code đổi nhưng dependency không đổi, build lại nhanh
-hơn nhiều vì không phải install lại từ đầu.
+**Writing a single-stage Node.js `Dockerfile`**
+Minimal structure: `FROM node:18-alpine` → `WORKDIR /app` → `COPY package*.json ./` → `RUN npm install` → `COPY . .` → `CMD ["node", "index.js"]`. Copying `package*.json` BEFORE running `npm install` (rather than copying all source code first) allows Docker to leverage layer caching for `npm install` — if source code changes but dependencies remain unchanged, subsequent builds execute significantly faster by skipping dependency re-installation.
 
-**`docker-compose.yml` cho nhiều service phụ thuộc nhau**
-`depends_on: [db]` báo Docker khởi động `db` trước service phụ thuộc nó
-(nhưng KHÔNG đợi `db` sẵn sàng nhận connection, chỉ đợi container start —
-đây là lý do code cần tự retry connect DB). `networks` định nghĩa 1 mạng ảo
-để các container gọi nhau bằng tên service; `volumes` là nơi lưu dữ liệu
-sống ngoài vòng đời container (vd: `pgdata_dev` giữ dữ liệu Postgres dù
-container bị xoá và tạo lại).
+**`docker-compose.yml` for dependent services**
+`depends_on: [db]` instructs Docker to start the `db` container before dependent application containers (note: it does NOT wait for PostgreSQL inside `db` to finish initialization and accept connections — which is why application code must implement retry logic). `networks` defines virtual bridge networks for container-to-container communication using service names; `volumes` persist stateful data across container lifecycles (e.g., `pgdata_dev` retains database storage even if containers are destroyed and recreated).
 
-**Đọc hiểu CI pipeline YAML**
-`on: push/pull_request` định nghĩa khi nào pipeline chạy; mỗi `job` chạy
-độc lập (mặc định song song) trên 1 máy ảo sạch; các `step` trong 1 job
-chạy tuần tự. `actions/checkout` tải code repo vào máy CI (bắt buộc phải có
-ở bước đầu, nếu không các step sau không có code để chạy).
+**Reading CI pipeline YAML files**
+`on: push/pull_request` defines trigger conditions; each `job` runs independently (in parallel by default) on an isolated runner; `steps` within a job execute sequentially. `actions/checkout` fetches repository code into the runner context (a mandatory initial step required before subsequent steps can execute scripts).
 
 ## Security
 
-**Hash password đúng cách, salt rounds**
-"Salt" là chuỗi ngẫu nhiên trộn vào password trước khi hash, khiến 2 user
-cùng password vẫn ra hash khác nhau (chống rainbow table attack — bảng tra
-sẵn hash của password phổ biến). `bcrypt` tự sinh và lưu salt trong chuỗi
-hash output. "Salt rounds" (vd: 12) quyết định số lần lặp thuật toán — càng
-cao càng an toàn nhưng càng chậm; 10-12 là mức phổ biến cân bằng.
+**Proper password hashing and salt rounds**
+A "salt" is a random string concatenated with a password prior to hashing, ensuring two users with identical passwords produce distinct hash values (protecting against pre-computed rainbow table attacks). `bcrypt` generates and embeds the salt directly inside the output hash string. "Salt rounds" (e.g., 12) determine the computational work factor — higher iterations increase security but consume more CPU time; 10–12 is the industry standard balance point.
 
-**Parameterized query, SQL injection**
-Nối chuỗi trực tiếp (`` `SELECT * FROM users WHERE email = '${email}'` ``)
-cho phép attacker nhập `email = "' OR '1'='1"` để biến điều kiện `WHERE`
-thành luôn đúng, đọc được TOÀN BỘ bảng. Parameterized query
-(`pool.query('... WHERE email = $1', [email])`) gửi giá trị tách biệt khỏi
-câu lệnh SQL — driver DB tự escape, giá trị nhập vào không bao giờ được
-hiểu là code SQL.
+**Parameterized queries and SQL injection**
+Direct string concatenation (`` `SELECT * FROM users WHERE email = '${email}'` ``) allows attackers to inject input like `email = "' OR '1'='1"` to turn `WHERE` conditions into tautologies, leaking the entire database table. Parameterized queries (`pool.query('... WHERE email = $1', [email])`) separate SQL commands from untrusted parameter values — the database driver safely escapes input values so they are never executed as SQL code.
 
 **CORS: `origin` vs `credentials`**
-CORS (Cross-Origin Resource Sharing) là cơ chế trình duyệt chặn request từ
-origin A (vd: `localhost:5173`) gọi tới origin B (vd: `localhost:5001`) trừ
-khi server B khai báo cho phép qua header `Access-Control-Allow-Origin`.
-Khi request cần gửi cookie (`credentials: true` ở client), server KHÔNG
-được dùng `origin: '*'` (wildcard) — trình duyệt sẽ chặn — mà phải khai báo
-đúng origin cụ thể (hoặc reflect origin động như
-[`src/app.ts`](../../be-node-express/src/app.ts) đang làm).
+CORS (Cross-Origin Resource Sharing) is a browser security mechanism restricting cross-origin HTTP requests (e.g., from `localhost:5173` to `localhost:5001`) unless explicitly permitted by the target server via the `Access-Control-Allow-Origin` header. When requests include credentials/cookies (`credentials: true` on the client), servers MUST NOT specify a wildcard `origin: '*'` — browsers will reject the response; servers must explicitly match specific origins (or dynamically reflect allowed origins as done in [`src/app.ts`](../../be-node-express/src/app.ts)).
 
-**XSS và output escaping**
-XSS (Cross-Site Scripting) là khi attacker chèn được `<script>` hoặc HTML
-độc hại vào dữ liệu, và nó bị hiển thị lại như code thật trên trình duyệt
-người khác (vd: todo title chứa `<script>steal cookie</script>`). React tự
-động escape mọi giá trị render qua `{}` (biến `<` thành `&lt;`) — chỉ mất an
-toàn khi dùng `dangerouslySetInnerHTML` (đúng như tên gọi, phải tự chịu
-trách nhiệm escape).
+**XSS and output escaping**
+XSS (Cross-Site Scripting) occurs when attackers inject malicious `<script>` tags or raw HTML payload into application data, which is subsequently rendered directly by victim browsers (e.g., a todo title containing `<script>steal cookie</script>`). React automatically escapes values rendered inside JSX `{}` (converting `<` into `&lt;`) — risk only arises when explicitly invoking `dangerouslySetInnerHTML`.
 
-## Cách dùng file này để tự luyện
+## Practical Self-Study Guide
 
-Che phần giải thích lại, chỉ nhìn tiêu đề gạch đầu dòng ở
-`level-2-junior.md`, tự nói to (hoặc viết ra) câu trả lời trước khi mở lại
-file này để đối chiếu.
+Cover the detailed answer sections, review only the requirement titles in `level-2-junior.md`, and speak out (or write down) your explanations before referencing this answer guide to verify accuracy.

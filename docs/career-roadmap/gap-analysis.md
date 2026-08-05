@@ -1,98 +1,54 @@
-# Gap Analysis: `todo-app` hiện đang ở đâu?
+# Gap Analysis: Where Does `todo-app` Currently Stand?
 
-Đánh giá thật (không tô hồng) dựa trên code hiện tại tại thời điểm viết
-tài liệu này (2026-08). Dùng file này làm điểm bắt đầu, rồi tick dần khi
-làm xong từng mục.
+An honest (unvarnished) evaluation based on the codebase as of this writing (2026-08). Use this document as your starting baseline, checking off items as you complete each task.
 
-## Tóm tắt theo level
+## Summary by Level
 
-| Level | Trạng thái | Ghi chú |
+| Level | Status | Notes |
 | :--- | :--- | :--- |
-| 1 — Fresher | ✅ Vượt xa | Bản gốc `be-node-express` từng ở đúng mức này |
-| 2 — Junior | ✅ Vượt xa | Có tách layer, JWT, validation |
-| 3 — Middle | 🟡 Đạt phần lớn | Thiếu test, migration tool, cache — xem chi tiết dưới |
-| 4 — Senior | 🟠 Một phần | Có ADR-worthy decisions nhưng chưa viết ra; chưa có observability, queue |
-| 5 — Staff | 🔴 Chưa | Cần artifact (RFC), không cần code thêm vào chính dự án |
-| 6 — Consultant | 🔴 Chưa | Cần artifact (due diligence, build-vs-buy memo) |
+| 1 — Fresher | ✅ Far Exceeded | The original `be-node-express` was precisely at this baseline |
+| 2 — Junior | ✅ Far Exceeded | Includes layer separation, JWT auth, input validation |
+| 3 — Middle | 🟡 Mostly Met | Lacks automated test suites, migration tools, caching — see details below |
+| 4 — Senior | 🟠 Partially Met | Contains ADR-worthy technical decisions (unwritten); lacks observability and queues |
+| 5 — Staff | 🔴 Not Met | Requires written artifacts (RFCs), rather than additional code in this project |
+| 6 — Consultant | 🔴 Not Met | Requires written artifacts (due diligence, build-vs-buy decision memos) |
 
-## Tóm tắt theo mảng (track)
+## Summary by Engineering Track
 
-| Mảng | Level ước tính | Ghi chú |
+| Track | Estimated Level | Notes |
 | :--- | :--- | :--- |
-| Backend | Middle (đầu Senior) | Layered, 2 auth pattern, SQL thật — thiếu test là rào cản chính lên Senior |
-| Frontend | Junior | `fe-vite`/`fe-nextjs` chưa đổi từ baseline gốc, không theo kịp phần BE đã nâng cấp |
-| DevOps | Junior (đầu Middle) | Multi-stage Docker + compose dev/prod tốt, nhưng CI chưa chạy test/lint, chưa `HEALTHCHECK` |
-| Security | Middle | Password/JWT/rate-limit đúng cách, nhưng thiếu security headers, dependency scan, least-privilege DB user |
+| Backend | Middle (early Senior) | Layered architecture, 2 auth patterns, real SQL — lack of test suites is main barrier to Senior |
+| Frontend | Junior | `fe-vite`/`fe-nextjs` remain at original baseline, falling behind refactored BE capabilities |
+| DevOps | Junior (early Middle) | Good multi-stage Docker + dev/prod compose setups, but CI lacks linting/testing and `HEALTHCHECK` |
+| Security | Middle | Hashing/JWT/rate-limiting proper, but lacks security headers, vulnerability scanning, least-privilege DB role |
 
-## Đã có (đáng kể để nói trong phỏng vấn)
+## Existing Strengths (Notable for Interview Discussions)
 
-- Kiến trúc layered rõ ràng: `routes → controllers → services →
-  repositories` ([`be-node-express/src`](../../be-node-express/src)).
-- Hai pattern auth chạy song song trên cùng 1 CRUD để so sánh trực tiếp:
-  JWT (access + refresh rotation, revoke khi reuse) và session
-  (`express-session` + `connect-pg-simple`, lưu trong Postgres).
-- SQL thật: composite index đã verify bằng `EXPLAIN`, JOIN + `GROUP BY` +
-  `FILTER` cho analytical endpoint (`/api/todos/stats`), parameterized query
-  toàn bộ, whitelist cột `sortBy` để tránh SQL injection qua `ORDER BY`.
-- REST API design: pagination/filtering/sorting, status code đúng chuẩn,
-  rate limiting cho auth endpoints.
-- Một bug thật đã tìm và fix: `authenticateSession` là async middleware
-  không được wrap `asyncHandler` → unhandled rejection → crash process.
-  Đây là chất liệu tốt cho postmortem (xem
-  [level-4-senior.md](level-4-senior.md)).
-- GraphQL dùng chung service/repository layer với REST, không duplicate
-  logic.
-- DevOps: multi-stage `Dockerfile` (build stage tách khỏi runtime), env
-  tách biệt dev/prod, `docker-compose.prod.yml` dùng `${VAR:?...}` để
-  fail-fast nếu thiếu secret production thay vì âm thầm dùng giá trị yếu.
-- Security: `bcrypt` 12 salt rounds, parameterized query toàn bộ, refresh
-  token rotation + reuse detection, rate limiting cho auth endpoints.
+- Clear layered architecture: `routes → controllers → services → repositories` ([`be-node-express/src`](../../be-node-express/src)).
+- Dual auth patterns running side-by-side on a single CRUD app for direct comparison: JWT (access + refresh token rotation, revocation upon reuse detection) and session auth (`express-session` + `connect-pg-simple`, persisted in PostgreSQL).
+- Real SQL: composite index verified via `EXPLAIN`, `JOIN` + `GROUP BY` + `FILTER` for analytical metrics (`/api/todos/stats`), 100% parameterized queries, whitelisted `sortBy` columns preventing SQL injection via `ORDER BY`.
+- REST API design: pagination / filtering / sorting, proper status codes, rate limiting on auth endpoints.
+- Real bug discovered and fixed: `authenticateSession` async middleware lacked an `asyncHandler` wrapper → unhandled rejection → process crash. Serves as prime material for postmortems (see [level-4-senior.md](level-4-senior.md)).
+- GraphQL sharing underlying service/repository layers with REST, eliminating logic duplication.
+- DevOps: multi-stage `Dockerfile` (builder stage isolated from runtime), environment config separation (dev/prod), `docker-compose.prod.yml` using `${VAR:?...}` syntax to fail-fast on missing production secrets rather than quietly defaulting to weak credentials.
+- Security: `bcrypt` with 12 salt rounds, 100% parameterized SQL queries, refresh token rotation + reuse detection, rate limiting on auth endpoints.
 
-## Còn thiếu, theo thứ tự ưu tiên nên làm tiếp
+## Gaps Remaining (In Priority Order for Implementation)
 
-1. **Automated tests (ưu tiên cao nhất)** — hiện tại `be-node-express`
-   không có bất kỳ test nào (`package.json` không có script `test`). Đây là
-   gap rõ nhất chặn bạn ở Level 3. Bắt đầu với:
-   - Unit test cho `services/auth.service.ts` (mock repository).
-   - Integration test bằng `supertest` cho `/api/auth/*` và `/api/todos`
-     (dùng DB test riêng hoặc transaction rollback sau mỗi test).
-2. **Migration tool có version** — hiện dùng 1 file `db/init.sql` chạy qua
-   Docker entrypoint. Thêm `node-pg-migrate` hoặc Prisma để có `up/down`,
-   review được qua PR như code.
-3. **Caching layer** — `/api/todos/stats` là ứng viên tốt để thêm Redis
-   cache theo `userId`, invalidate khi có todo thay đổi trong category đó.
-4. **Observability tối thiểu** — thay `console.log`/`console.error` bằng
-   structured logger (`pino`), thêm request ID để trace 1 request qua log.
-5. **CI nâng cấp** — `.github/workflows/ci.yml` hiện chỉ build + docker
-   build cho `be-node-express`, chưa chạy `tsc --noEmit`, chưa chạy test
-   (vì chưa có), chưa có lint step riêng cho service này.
-6. **Frontend theo kịp backend** — `fe-vite`/`fe-nextjs` gọi `/api/todos`
-   không cần auth; sau khi thêm JWT vào `be-node-express`, 2 frontend này
-   không còn gọi được backend đó qua UI (xem cảnh báo trong
-   [`ARCHITECTURE.md`](../../ARCHITECTURE.md)). Thêm màn hình login đơn
-   giản + lưu access token là bài tập tốt để luyện Level 3 FE (React Query +
-   token trong memory/httpOnly refresh cookie).
-7. **Artifact cấp Senior/Staff/Consultant** — 3 tài liệu gợi ý ở
-   [level-4-senior.md](level-4-senior.md), [level-5-staff-lead.md](level-5-staff-lead.md),
-   và [level-6-principal-consultant.md](level-6-principal-consultant.md):
-   postmortem cho bug đã tìm thấy, RFC "hệ thống vỡ ở đâu tại 10 triệu
-   user", và due diligence report giả lập.
-8. **Security headers (`helmet`)** — chưa có bất kỳ security header nào
-   (`CSP`, `HSTS`, `X-Frame-Options`) trong `src/app.ts`. Việc làm nhanh
-   nhất trong danh sách này (&lt;30 phút), nên làm trước mục 9-10.
-9. **Xử lý `npm audit`** — `be-node-express` hiện có 3 lỗ hổng transitive
-   (`@apollo/server`, `brace-expansion`, `uuid` — mức moderate/high). Chưa
-   có Dependabot/Renovate config để tự động theo dõi CVE mới.
-10. **Least-privilege DB user** — app hiện dùng `postgres`/`postgres`
-    (superuser) để kết nối DB thay vì 1 role riêng chỉ có quyền
-    `SELECT/INSERT/UPDATE/DELETE` trên các bảng cần thiết.
-11. **`HEALTHCHECK` trong Dockerfile** — endpoint `/health` đã tồn tại
-    ([`src/app.ts`](../../be-node-express/src/app.ts)) nhưng
-    [`Dockerfile`](../../be-node-express/Dockerfile) chưa khai báo
-    `HEALTHCHECK` để container orchestrator dùng được.
+1. **Automated Tests (Highest Priority)** — `be-node-express` currently lacks tests (`package.json` contains no `test` script). This represents the primary single blocker to solidifying Level 3. Start with:
+   - Unit tests for `services/auth.service.ts` (mocking repositories).
+   - Integration tests using `supertest` covering `/api/auth/*` and `/api/todos` (using isolated test databases or per-test transaction rollbacks).
+2. **Versioned Database Migrations** — currently uses a single `db/init.sql` script via Docker entrypoint. Add `node-pg-migrate` or Prisma to provide `up/down` migrations reviewable via PRs like standard application code.
+3. **Caching Layer** — `/api/todos/stats` is a prime candidate for Redis caching by `userId`, invalidated whenever todo items mutate within associated categories.
+4. **Minimal Observability** — replace `console.log`/`console.error` with structured JSON logging (`pino`), introducing unique request IDs to trace requests through logs.
+5. **CI Upgrades** — [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) currently only executes build + Docker image checks for `be-node-express`, omitting `tsc --noEmit`, test runs (due to missing tests), and linting steps for this service.
+6. **Bringing Frontend Up to Speed with Backend** — `fe-vite`/`fe-nextjs` fetch `/api/todos` without authentication headers; after enforcing JWT in `be-node-express`, these frontends cannot communicate with the backend via UI (see warnings in [`ARCHITECTURE.md`](../../ARCHITECTURE.md)). Implementing a login interface + token persistence serves as a practical Level 3 FE exercise (React Query + memory tokens / httpOnly refresh cookies).
+7. **Senior / Staff / Consultant Artifacts** — authoring the 3 recommended documents detailed in [level-4-senior.md](level-4-senior.md), [level-5-staff-lead.md](level-5-staff-lead.md), and [level-6-principal-consultant.md](level-6-principal-consultant.md): a postmortem for the unhandled async error bug, an RFC detailing architectural failure points at 10M users, and a simulated technical due diligence report.
+8. **Security Headers (`helmet`)** — currently missing security headers (`CSP`, `HSTS`, `X-Frame-Options`) in `src/app.ts`. This requires <30 minutes and should be implemented before items 9–10.
+9. **Remediating `npm audit` Findings** — `be-node-express` currently reports 3 transitive vulnerabilities (`@apollo/server`, `brace-expansion`, `uuid` at moderate/high severity). Lacks Dependabot/Renovate configs for automated CVE tracking.
+10. **Least-Privilege Database Role** — application currently connects using `postgres`/`postgres` superuser credentials rather than a dedicated application DB role restricted strictly to `SELECT/INSERT/UPDATE/DELETE` on target tables.
+11. **`HEALTHCHECK` in Dockerfile** — the `/health` endpoint exists in [`src/app.ts`](../../be-node-express/src/app.ts), but [`Dockerfile`](../../be-node-express/Dockerfile) lacks a `HEALTHCHECK` directive for container orchestrators.
 
-## Cách dùng file này
+## How to Use This File
 
-Copy bảng "Còn thiếu" thành checklist cá nhân, làm 1 mục xong thì quay lại
-đối chiếu với đúng file `level-N-*.md` tương ứng để tự chấm — không chỉ tick
-xong việc mà không hiểu vì sao nó quan trọng.
+Copy the "Gaps Remaining" list into a personal checklist. Upon completing an item, review the corresponding `level-N-*.md` document to self-evaluate — ensuring you understand *why* the implementation matters beyond checking off tasks.

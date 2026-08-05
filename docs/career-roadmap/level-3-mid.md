@@ -1,127 +1,64 @@
 # Level 3 — Middle
 
-> Tự trả lời từng gạch đầu dòng trước khi xem [đáp án/giải thích chi tiết](level-3-mid-answers.md).
+> Self-answer each bullet point before viewing the [answers/detailed explanation](level-3-mid-answers.md).
 
 ## Frontend
 
-**Yêu cầu**
-- Quản lý server state đúng cách: React Query/TanStack Query hoặc SWR (thay
-  vì tự `useEffect` + `useState` để fetch/cache/refetch).
-- State management client phức tạp khi cần: Redux Toolkit, Zustand, hoặc
-  Context API dùng đúng chỗ (biết khi nào Context gây re-render thừa).
-- Performance: `React.memo`, code splitting (`React.lazy` + `Suspense`),
-  hiểu re-render là gì và cách tránh re-render thừa.
-- Testing: unit test component với Jest + React Testing Library (test theo
-  hành vi người dùng, không test implementation detail).
-- TypeScript chặt hơn: generic type cơ bản, union/discriminated union,
-  không dùng `any` tùy tiện.
-- Kiến thức nền SSR/CSR/SSG (Next.js `app router`), Web Vitals (LCP/CLS/INP)
-  ở mức khái niệm.
+**Requirements**
+- Proper server state management: React Query / TanStack Query or SWR (instead of manual `useEffect` + `useState` for fetch/cache/refetch).
+- Complex client state management when needed: Redux Toolkit, Zustand, or Context API used correctly (understanding when Context triggers unnecessary re-renders).
+- Performance: `React.memo`, code splitting (`React.lazy` + `Suspense`), understanding re-rendering mechanisms and how to prevent unnecessary re-renders.
+- Testing: component unit testing with Jest + React Testing Library (testing user behavior rather than implementation details).
+- Stricter TypeScript: basic generics, union / discriminated unions, avoiding indiscriminate use of `any`.
+- Conceptual understanding of SSR/CSR/SSG (Next.js `app router`) and Web Vitals (LCP/CLS/INP).
 
-**Keywords**: React Query, cache invalidation, optimistic update, Redux
-Toolkit slice, Zustand store, code splitting, `React.memo`, discriminated
-union, hydration, Web Vitals, accessibility (a11y) — `aria-*`, focus
-management.
+**Keywords**: React Query, cache invalidation, optimistic update, Redux Toolkit slice, Zustand store, code splitting, `React.memo`, discriminated union, hydration, Web Vitals, accessibility (a11y) — `aria-*`, focus management.
 
-**Áp dụng vào `todo-app`**: **CHƯA có** ở `fe-vite`/`fe-nextjs` hiện tại —
-cả hai đều tự quản lý fetch bằng `useState`/`useEffect` thô, không có
-React Query, không có test nào. Đây là phần gap rõ nhất để luyện Level 3
-FE: refactor 1 trong 2 frontend sang dùng TanStack Query cho
-`GET/POST/PATCH/DELETE /api/todos`, thêm optimistic update khi toggle
-`completed`, và viết vài test RTL cho `TodoList`.
+**Application in `todo-app`**: **NOT YET implemented** in current `fe-vite`/`fe-nextjs` — both currently handle fetching via raw `useState`/`useEffect`, lacking React Query and automated test suites. This is the clearest gap for practicing Level 3 FE: refactor one of the frontends to use TanStack Query for `GET/POST/PATCH/DELETE /api/todos`, implement optimistic updates when toggling `completed`, and write RTL tests for `TodoList`.
 
 ## Backend
 
-**Yêu cầu**
-- Thiết kế REST API chuẩn: pagination, filtering, sorting, versioning
-  (`/api/v1`).
-- SQL nâng cao: đọc hiểu `EXPLAIN`/`EXPLAIN ANALYZE`, biết khi nào cần
-  composite index, nhận diện được N+1 query, transaction với rollback khi
-  lỗi giữa chừng.
-- Auth: so sánh được trade-off JWT (stateless) vs session (stateful), JWT
-  refresh token rotation, revoke token khi logout.
-- Testing: unit test service layer (mock repository), integration test API
-  bằng `supertest` chạy trên DB test riêng.
-- Migration tool có version (Knex/Prisma/TypeORM migrations) thay vì 1 file
-  `init.sql` chạy 1 lần.
-- Caching cơ bản: Redis cho dữ liệu đọc nhiều/ghi ít, cache invalidation khi
-  update.
+**Requirements**
+- Standard REST API design: pagination, filtering, sorting, versioning (`/api/v1`).
+- Advanced SQL: reading and understanding `EXPLAIN`/`EXPLAIN ANALYZE`, knowing when composite indexes are required, identifying N+1 query problems, implementing database transactions with rollback on failure.
+- Auth: evaluating tradeoffs between JWT (stateless) vs session (stateful), JWT refresh token rotation, token revocation on logout.
+- Testing: service layer unit testing (mocking repository layers), integration testing APIs using `supertest` against an isolated test database.
+- Versioned database migrations (Knex/Prisma/TypeORM migrations) instead of a single `init.sql` executed once.
+- Basic caching: Redis for read-heavy/write-light data patterns, cache invalidation on updates.
 
-**Keywords**: pagination cursor vs offset, composite index, `EXPLAIN
-ANALYZE`, N+1 query, refresh token rotation, `supertest`, test database,
-migration up/down, Redis, cache invalidation, idempotency key.
+**Keywords**: cursor vs offset pagination, composite index, `EXPLAIN ANALYZE`, N+1 query, refresh token rotation, `supertest`, test database, migration up/down, Redis, cache invalidation, idempotency key.
 
-**Áp dụng vào `todo-app`**: `be-node-express` hiện đã đạt: pagination/
-filtering/sorting (`GET /api/todos`), composite index đã verify bằng
-`EXPLAIN` (xem [GUIDE.md](../../be-node-express/GUIDE.md#sql)), JWT refresh
-rotation + revoke, JOIN + aggregate query (`/api/todos/stats`), và session
-auth song song để so sánh trade-off. **Còn thiếu để chắc Level 3**:
-- Không có test nào (`npm test` không tồn tại) — đây là gap lớn nhất.
-- Dùng `init.sql` chạy 1 lần qua Docker entrypoint, không phải migration có
-  version/rollback (thử thêm Prisma hoặc `node-pg-migrate`).
-- Chưa có caching layer (Redis) — `GET /api/todos/stats` là ứng viên tốt để
-  cache theo `userId`, invalidate khi có todo thay đổi.
-- Chưa có API versioning.
+**Application in `todo-app`**: `be-node-express` currently ACHIEVES: pagination/filtering/sorting (`GET /api/todos`), composite index verified via `EXPLAIN` (see [GUIDE.md](../../be-node-express/GUIDE.md#sql)), JWT refresh rotation + revocation, JOIN + aggregate queries (`/api/todos/stats`), and side-by-side session auth comparison. **Missing to solidify Level 3**:
+- No tests (`npm test` does not exist) — this is the largest single gap.
+- Uses `init.sql` run once via Docker entrypoint, rather than versioned/rollback migrations (try adding Prisma or `node-pg-migrate`).
+- No caching layer (Redis) — `GET /api/todos/stats` is a prime candidate for caching per `userId`, invalidated whenever todos change.
+- No API versioning prefix yet.
 
 ## DevOps
 
-**Yêu cầu**
-- Multi-stage Docker build để giảm image size (build stage tách khỏi
-  runtime stage, không mang `devDependencies`/source TS vào image production).
-- CI pipeline thực tế: chạy lint + type-check + test (không chỉ build),
-  cache `node_modules`/npm cache giữa các run để giảm thời gian CI.
-- Tách biệt config theo môi trường (dev/staging/prod) rõ ràng — không copy
-  cùng 1 file `.env` giữa các môi trường.
-- Health check endpoint (`/health`) và biết dùng nó cho container
-  orchestrator (`HEALTHCHECK` trong Dockerfile, hoặc readiness probe).
+**Requirements**
+- Multi-stage Docker builds to reduce final image size (separating build stage from runtime stage, omitting `devDependencies`/TypeScript source files from production images).
+- Realistic CI pipeline: running lint + type-check + tests (not just build steps), caching `node_modules`/npm cache across pipeline runs to decrease CI build duration.
+- Explicit environmental config separation (dev/staging/prod) — avoiding copying identical `.env` files across environments.
+- Health check endpoints (`/health`) and utilizing them for container orchestrators (`HEALTHCHECK` in Dockerfile, or readiness probes).
 
-**Keywords**: multi-stage build, Docker layer caching, CI cache
-(`actions/cache`), `HEALTHCHECK`, environment parity, container registry.
+**Keywords**: multi-stage build, Docker layer caching, CI cache (`actions/cache`), `HEALTHCHECK`, environment parity, container registry.
 
-**Áp dụng vào `todo-app`**: [`be-node-express/Dockerfile`](../../be-node-express/Dockerfile)
-đã là multi-stage (builder tách khỏi runtime, `npm install --only=production`
-ở stage cuối) — giải thích được vì sao stage cuối không cần TypeScript hay
-`devDependencies` là đạt yêu cầu. **Còn thiếu**: `.github/workflows/ci.yml`
-hiện chỉ `npm install && npm run build` (build check), CHƯA chạy lint, chưa
-chạy test (vì `be-node-express` chưa có test — xem
-[gap-analysis.md](gap-analysis.md)), chưa cache `node_modules` giữa các run,
-và chưa có `HEALTHCHECK` trong Dockerfile dù endpoint `/health` đã tồn tại
-trong [`src/app.ts`](../../be-node-express/src/app.ts).
+**Application in `todo-app`**: [`be-node-express/Dockerfile`](../../be-node-express/Dockerfile) is already multi-stage (builder stage separated from runtime stage, `npm install --only=production` in the final stage) — explaining why the final stage does not require TypeScript or `devDependencies` meets requirements. **Missing**: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) currently only runs `npm install && npm run build` (a build check), does NOT run linters, does NOT run tests (since `be-node-express` lacks tests — see [gap-analysis.md](gap-analysis.md)), does NOT cache `node_modules` between runs, and lacks a `HEALTHCHECK` in the Dockerfile despite having a `/health` endpoint in [`src/app.ts`](../../be-node-express/src/app.ts).
 
 ## Security
 
-**Yêu cầu**
-- JWT best practices: access token sống ngắn, refresh token rotation +
-  revoke khi phát hiện reuse (chống replay attack), không lưu JWT secret
-  hardcode trong source.
-- Rate limiting cho endpoint nhạy cảm (login/register) để chống brute-force.
-- Hiểu và áp dụng được vài mục trong OWASP Top 10 (Injection, Broken
-  Authentication, Sensitive Data Exposure) chứ không chỉ biết tên.
-- Dependency vulnerability scanning: `npm audit`, Dependabot/Renovate tự
-  động tạo PR khi có CVE.
-- Biết CSRF là gì và vì sao session-based auth cần quan tâm tới nó nhiều
-  hơn JWT qua header.
+**Requirements**
+- JWT best practices: short-lived access tokens, refresh token rotation + revocation upon detecting reuse (mitigating replay attacks), storing JWT secrets securely outside source code.
+- Rate limiting on sensitive endpoints (login/register) to prevent brute-force attacks.
+- Understanding and applying OWASP Top 10 vulnerabilities (Injection, Broken Authentication, Sensitive Data Exposure) in practice.
+- Dependency vulnerability scanning: `npm audit`, Dependabot/Renovate automatically submitting PRs when CVEs are identified.
+- Understanding CSRF and why session-based authentication requires greater CSRF mitigation than JWT sent via request headers.
 
-**Keywords**: refresh token rotation, replay attack, rate limiting, OWASP
-Top 10, `npm audit`, Dependabot, CSRF, `SameSite` cookie.
+**Keywords**: refresh token rotation, replay attack, rate limiting, OWASP Top 10, `npm audit`, Dependabot, CSRF, `SameSite` cookie.
 
-**Áp dụng vào `todo-app`**: [`src/services/auth.service.ts`](../../be-node-express/src/services/auth.service.ts)
-đã implement refresh token rotation + reuse detection (token cũ bị revoke
-ngay khi dùng để lấy token mới) — test lại bằng cách gọi `/api/auth/refresh`
-2 lần với cùng 1 refresh token, lần 2 phải trả `401`.
-[`src/middleware/rateLimiter.ts`](../../be-node-express/src/middleware/rateLimiter.ts)
-giới hạn 20 request/15 phút cho `/api/auth/*`. **Còn thiếu**: chạy
-`npm audit` trong `be-node-express` hiện báo 3 lỗ hổng transitive
-(`@apollo/server`, `brace-expansion`, `uuid`) chưa được xử lý hay theo dõi;
-chưa có Dependabot/Renovate config; cookie session dùng `sameSite: 'lax'`
-(đúng hướng chống CSRF) nhưng chưa giải thích rõ trong code vì sao không
-dùng `'strict'`.
+**Application in `todo-app`**: [`src/services/auth.service.ts`](../../be-node-express/src/services/auth.service.ts) implements refresh token rotation + reuse detection (revoking old tokens immediately upon producing new access tokens) — test this by making two consecutive requests to `/api/auth/refresh` using the same refresh token; the second attempt will yield `401`. [`src/middleware/rateLimiter.ts`](../../be-node-express/src/middleware/rateLimiter.ts) enforces a limit of 20 requests per 15 minutes for `/api/auth/*`. **Missing**: running `npm audit` in `be-node-express` currently reports 3 transitive vulnerabilities (`@apollo/server`, `brace-expansion`, `uuid`) requiring tracking/remediation; lacks Dependabot/Renovate configurations; session cookies utilize `sameSite: 'lax'` (proper CSRF defense), but code comments do not explicitly document why `'strict'` was not chosen.
 
-## Cách tự kiểm tra đã qua Level 3
+## How to Self-Check Level 3 Mastery
 
-Bạn tự thiết kế được schema có transaction đúng (vd: chuyển tiền giữa 2 tài
-khoản), viết được test giả lập request thật (supertest) mà không cần chạy
-tay bằng curl, giải thích được vì sao offset pagination chậm ở trang sau
-với bảng lớn (và cursor pagination giải quyết ra sao), tự viết được CI chạy
-test thật (không chỉ build), và giải thích được refresh token rotation
-chống lại kiểu tấn công gì.
+You can design a database schema with proper transactions (e.g., transferring funds between two accounts), write integration tests simulating real HTTP requests (`supertest`) without executing manual curl commands, explain why offset pagination degrades on deep pages in large tables (and how cursor pagination resolves it), write a CI workflow executing automated test suites, and articulate what specific attack vector refresh token rotation prevents.

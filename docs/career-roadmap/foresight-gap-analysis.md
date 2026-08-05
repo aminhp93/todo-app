@@ -1,258 +1,78 @@
-# Gap Analysis: Foresight Platform đối chiếu với thang level
+# Gap Analysis: Foresight Platform Mapped Against Level Scale
 
-`foresight-2` (`/Users/aminhp93/working/foresight-2/repo`) là checkout cục bộ
-của **Foresight** — nền tảng Building Intelligence thật của Piscada (công ty
-Na Uy, đang gọi Series A $8M, 766 khách hàng thật, 1,500 tòa nhà thật) — gồm
-**32 repo** (sau khi archive 4 repo legacy còn **28**), chạy production thật
-trên GKE. Khác hẳn `pmp4-sim` (1 dự án mô phỏng để học), đây là **hệ thống
-thật đang phục vụ khách hàng thật**, nên hầu như mọi level từ 1-6 đều có ví
-dụ thật, nhiều hơn hẳn những gì 1 dự án cá nhân có thể tạo ra — giá trị của
-file này là **trích ra ví dụ thật kèm đường dẫn cụ thể**, không phải "học
-Foresight" (bạn không sửa được code này, không phải dự án của bạn).
+`foresight-2` (`/Users/aminhp93/working/foresight-2/repo`) is a local checkout of **Foresight** — Piscada's production Building Intelligence platform (a Norwegian company raising Series A $8M, serving 766 real enterprise customers and 1,500 real commercial buildings). It comprises **32 repositories** (28 active after archiving 4 legacy repos) running in live production on GKE. Unlike `pmp4-sim` (a simulation project created for learning), this is a **live production system serving real customers**, offering real-world examples across levels 1–6 — far beyond what a personal project can construct. The purpose of this document is to **extract real-world examples with explicit file references**, not to "study Foresight" (you cannot edit this codebase; it is not your repository).
 
-File này dùng song song với `level-N-*.md` và không thay thế chúng — đọc
-"Yêu cầu"/"Keywords" ở file level tương ứng trước, rồi quay lại đây để thấy
-"đây là ví dụ thật, ở công ty thật, người ta làm y hệt khái niệm đó như thế
-nào".
+This document serves as a side-by-side reference alongside `level-N-*.md` files — read the "Requirements" / "Keywords" in the respective level file first, then reference this file to observe: "Here is how this exact concept is implemented at a real company in real production."
 
-## Tóm tắt theo level
+## Summary by Level
 
-| Level | Độ giàu ví dụ | Ghi chú |
+| Level | Example Richness | Notes |
 | :--- | :--- | :--- |
-| 1 — Fresher | 🔴 Không phải chỗ để học | Toàn bộ codebase đã ở mức layered/TypeScript nghiêm ngặt ngay từ đầu — không có ví dụ "1 file làm hết" để soi. Dùng `todo-app` cho level này. |
-| 2 — Junior | 🟢 Tốt | Custom hook convention rất rõ ràng, CORS thật (tự tay sửa trong session), quan hệ dữ liệu qua bảng thật trong Postgres |
-| 3 — Middle | 🟢 Rất tốt | TanStack Query đúng chuẩn, batching chống N+1 thật, schema migration có review qua PR, test pyramid đầy đủ (Vitest/Playwright/MSW) |
-| 4 — Senior | 🟢 Xuất sắc | GraphQL Federation thật, NATS JetStream, K8s + FluxCD GitOps, supply-chain security 4 lớp, Sealed Secrets, Jaeger tracing, SBOM scan trong CI |
-| 5 — Staff | 🟢 Có chất liệu RFC thật | Bounded context thật (không phải lý thuyết), CAP-theorem trade-off thật quan sát được (BGS replication), technical debt thật (frontend 2 stack song song) |
-| 6 — Consultant | 🟢 Có chất liệu due-diligence thật | Đã dùng chính codebase này làm due diligence + build-vs-buy + risk register thật trong các lượt hội thoại trước — xem phần cuối file |
+| 1 — Fresher | 🔴 N/A for learning | Entire codebase enforces strict layered/TypeScript architectures from day one — no simplistic single-file examples. Use `todo-app` for this level. |
+| 2 — Junior | 🟢 Good | Extremely standardized custom hook conventions, real CORS behaviors (patched directly in session), explicit relation junction tables in Postgres |
+| 3 — Middle | 🟢 Very Good | Enterprise-grade TanStack Query patterns, real anti-N+1 batching, PR-reviewed schema migrations, full test pyramid (Vitest/Playwright/MSW) |
+| 4 — Senior | 🟢 Outstanding | Real GraphQL Federation, NATS JetStream event streaming, K8s + FluxCD GitOps, 4-tier supply-chain security, Sealed Secrets, Jaeger tracing, CI SBOM scans |
+| 5 — Staff | 🟢 Rich RFC Material | Real bounded contexts (not theoretical), observable CAP-theorem tradeoffs (BGS synchronous replication), real tech debt (dual concurrent FE stacks) |
+| 6 — Consultant | 🟢 Rich Due-Diligence Material | Codebase previously used for authentic due diligence + build-vs-buy memos + risk registers in prior session discussions — see end of file |
 
 ## Level 2 — Junior
 
-**Frontend — custom hook convention chuẩn hoá toàn platform**: mọi data hook
-trong `foresight-cloud-bms/src/hooks/data/` theo đúng 1 khuôn 3 file
-(`index.types.ts` chỉ chứa type, `query.ts` chứa GraphQL document + query
-factory, `index.ts` là hook tiêu dùng) — quy ước này được viết thành luật
-trong `foresight-cloud-bms/AGENTS.md`, không phải tự phát. Đọc file này là
-cách nhanh nhất thấy "custom hook nên tách ra sao" ở mức tổ chức nhiều team,
-không phải 1 file `useSomething.ts` tự do.
+**Frontend — Standardized Custom Hook Conventions Across Platform**: All data hooks in `foresight-cloud-bms/src/hooks/data/` adhere strictly to a 3-file pattern (`index.types.ts` containing interface definitions, `query.ts` declaring GraphQL documents + query factories, and `index.ts` exporting consumer hooks). This convention is enforced via lint/agent rules in `foresight-cloud-bms/AGENTS.md`. Reviewing this file demonstrates how custom hooks should be structured across multi-team engineering organizations, beyond arbitrary single-file `useSomething.ts` implementations.
 
-**Backend — CORS đúng/sai, tự tay sửa trong chính session này**: khi chạy
-BGS local, phát hiện `foresight-bgs/API/Program.cs` **comment hẳn dòng
-`app.UseCors()`** (dòng ~85 bản gốc) — vì production thật không cần CORS
-(mọi request qua oauth2-proxy/ingress-nginx cùng origin), CORS chỉ cần khi
-gọi thẳng từ browser local. Đây là ví dụ thật (không phải lý thuyết) cho câu
-hỏi "tại sao 1 API thật không có CORS mà vẫn chạy đúng production" — vì
-CORS là 1 concern của **trình duyệt gọi cross-origin**, không phải của mọi
-API luôn luôn cần.
+**Backend — Real-World CORS Dynamics (Patched Live in Session)**: When running BGS locally, inspecting `foresight-bgs/API/Program.cs` revealed that **`app.UseCors()` was commented out** (line ~85 originally) — because live production environments bypass CORS entirely (all requests funnel through `oauth2-proxy`/`ingress-nginx` on matching origins); CORS settings are required exclusively for direct local browser invocations. This provides a real-world answer to: "Why can a live production API operate cleanly without CORS configuration?" — because CORS is a **browser enforcement mechanism on cross-origin requests**, not a universal backend requirement.
 
-**Backend — quan hệ dữ liệu qua bảng nối thật**: BGS lưu Brick-graph trên
-Postgres bằng bảng nối tường minh kiểu `r_org_ismemberof_`/`r_org_hasmember_`
-(quan sát được trực tiếp qua log khi seed data — mỗi quan hệ có **2 bảng**,
-1 chiều thuận + 1 chiều nghịch, thay vì 1 cột FK) — ví dụ thật cho khái niệm
-"quan hệ nhiều-nhiều cần bảng trung gian, và khi cần truy vấn 2 chiều nhanh,
-đôi khi denormalize thành 2 bảng thay vì 1 bảng + query ngược".
+**Backend — Explicit Relational Data Models via Junction Tables**: BGS persists Brick-graph structures in PostgreSQL using explicit junction tables such as `r_org_ismemberof_` and `r_org_hasmember_` (observable via seed logs — each relationship maintains **two tables**, forward and reverse directions, rather than a single FK column). This offers a real-world example of: "Many-to-many relationships require junction tables, and when high-speed bidirectional queries are needed, data may be denormalized into dual tables instead of relying on reverse subquery lookups."
 
 ## Level 3 — Middle
 
-**Frontend — TanStack Query đúng chuẩn, không phải `useEffect` thô**: toàn
-bộ `foresight-cloud-bms` dùng `queryOptions(...)` factory pattern (không bao
-giờ inline option vào `useQuery`), `staleTime`/`gcTime` được set có chủ đích
-khác nhau theo loại dữ liệu (`Number.POSITIVE_INFINITY` cho danh sách tòa
-nhà — gần như không đổi trong phiên; `30_000`ms cho giá trị cảm biến —
-sống động) — đọc `AGENTS.md` mục "TanStack Query pattern" để thấy lý do
-từng con số, không phải mặc định copy-paste.
+**Frontend — Standardized TanStack Query Factory Patterns**: `foresight-cloud-bms` utilizes the `queryOptions(...)` factory pattern throughout (never inlining query options directly inside `useQuery`), setting distinct `staleTime`/`gcTime` durations according to data volatile characteristics (`Number.POSITIVE_INFINITY` for building lists — invariant during sessions; `30_000`ms for real-time telemetry sensor values). Review `AGENTS.md` section "TanStack Query pattern" to understand the rationale behind these parameters rather than default copy-pasting.
 
-**Backend — chống N+1 thật, có thư viện riêng**: `foresight-components/src/batching`
-export `batchArray`/`calculateOptimalBatchSize`/`combineBatchResults` — khi
-1 hook cần load N entity mà N có thể lên tới hàng nghìn (vd building theo
-portfolio lớn), code **tự chia batch** (mặc định tối đa 100/request) thay vì
-gửi 1 query khổng lồ hoặc N query riêng lẻ — đây là câu trả lời thật cho
-"N+1 query" ở quy mô GraphQL (khác SQL N+1 nhưng cùng nguyên lý: đừng gọi
-N lần khi có thể gộp).
+**Backend — Real Anti-N+1 Query Batching via Dedicated Utilities**: `foresight-components/src/batching` exports `batchArray`/`calculateOptimalBatchSize`/`combineBatchResults` — when a hook loads N entities where N can scale to thousands (e.g., portfolio-wide building lists), application code **automatically batches execution** (default max 100 entities per request) instead of issuing a single monolithic query or N individual network requests. This provides a real answer to resolving N+1 queries at the GraphQL layer.
 
-**Backend — migration có version, có review, sinh tự động**: schema BGS
-**không viết tay** — nguồn thật là `fs-b-backend/Engine/SampleInputData/_Schema.bodil`,
-mọi commit vào nhánh main của repo đó tự động chạy pipeline sinh ra
-`schema_structure.json`, commit vào nhánh `auto/update-schema-structure` của
-`foresight-bgs`, **review qua PR rồi mới release** (xem
-`foresight-bgs/README.md` mục "Updating the Schema"). Đây là mức trưởng
-thành cao hơn hẳn "Prisma migrate" thông thường — migration được sinh từ 1
-DSL, không viết SQL tay, và có bước review bắt buộc trước khi chạm production.
+**Backend — Versioned, PR-Reviewed, Auto-Generated Migrations**: BGS schemas are **never authored manually by hand** — the authoritative source resides in `fs-b-backend/Engine/SampleInputData/_Schema.bodil`. Commits to `main` in that repository trigger automated pipelines generating `schema_structure.json`, creating a automated PR targeting `auto/update-schema-structure` in `foresight-bgs`, **requiring code review before merging and releasing** (see `foresight-bgs/README.md` section "Updating the Schema"). This represents a higher operational maturity level than standard manual migrations — generating migrations from DSLs with mandatory PR approval gates before production deployment.
 
-**Testing — test pyramid đầy đủ, có convention rõ**: `foresight-cloud-bms`
-có `npm run test` (Vitest, co-located `*.test.ts` cạnh file nguồn — không
-tách thư mục `__tests__`), `npm run test:e2e` (Playwright, chỉ chromium mặc
-định), và **MSW mock GraphQL** (`src/integrations/msw/handlers.ts`) dùng
-chung cho cả Vitest lẫn browser dev-mode — chính file này tôi đã dùng thật
-để chạy app hoàn toàn offline trong session trước. Đọc `AGENTS.md` mục
-"Tests" để thấy lý do chọn co-located thay vì `__tests__/`.
+**Testing — Full Test Pyramid with Explicit Conventions**: `foresight-cloud-bms` configures `npm run test` (Vitest, using co-located `*.test.ts` files alongside source files rather than isolated `__tests__` directories), `npm run test:e2e` (Playwright, default chromium targets), and **MSW GraphQL mocks** (`src/integrations/msw/handlers.ts`) shared across both Vitest unit suites and local dev mode — enabling complete offline execution. Read `AGENTS.md` section "Tests" to review arguments for co-located test structures over `__tests__/`.
 
-**Security — supply-chain scanning, vượt xa `npm audit` thông thường**:
-`.npmrc` của `foresight-cloud-bms`/`foresight-components` có **4 lớp phòng
-thủ** chồng nhau, enforce bằng script + pre-commit hook
-(`scripts/check-npmrc.mjs`): `min-release-age=7` (chặn cài package mới
-xuất bản <7 ngày — phòng supply-chain attack kiểu gói bị yank sau vài giờ),
-`ignore-scripts=true` (chặn mọi lifecycle script kể cả transitive dep),
-kiểm tra không có secret hardcode trong `.npmrc`, và quét không có `.npmrc`
-lồng trong thư mục con (tránh 1 sub-folder override policy gốc). Đây là ví
-dụ thật, cụ thể hơn hẳn "Dependabot/Renovate" — đáng đọc kỹ nếu muốn hiểu
-phòng thủ supply-chain thực chiến trông ra sao.
+**Security — Supply-Chain Defense Mechanisms Beyond Basic `npm audit`**: `.npmrc` configurations across `foresight-cloud-bms`/`foresight-components` enforce **4 defense layers** backed by pre-commit hooks (`scripts/check-npmrc.mjs`): `min-release-age=7` (blocking installation of packages published <7 days ago to mitigate supply-chain attacks), `ignore-scripts=true` (disabling lifecycle scripts across transitive dependencies), verifying absence of hardcoded secrets in `.npmrc`, and scanning to prevent nested `.npmrc` overrides in subdirectories. This demonstrates practical supply-chain security implementation.
 
 ## Level 4 — Senior
 
-**Backend — GraphQL Federation thật, không phải 1 API monolith**:
-`foresight-cloud/platform/foresight-core/federated-graph/` deploy image
-`piscada/foresight-federated-graph:0.3.0` — đây là **gateway** compose nhiều
-subgraph (`foresight-bgs`, `graph-service` = `foresight-graph-reader`, và
-nhiều subgraph khác) thành 1 schema thống nhất mà frontend gọi. Xác nhận
-được bằng `_service`/`_entities` field trong root Query type của cả BGS lẫn
-graph-reader khi introspect trực tiếp (tự tay làm trong session trước) —
-đây là ví dụ thật hiếm gặp của Apollo Federation ở production, tốt hơn hẳn
-đọc tài liệu lý thuyết.
+**Backend — Production GraphQL Federation Architecture**: `foresight-cloud/platform/foresight-core/federated-graph/` deploys container image `piscada/foresight-federated-graph:0.3.0` — acting as an **API Gateway** composing multiple subgraphs (`foresight-bgs`, `graph-service`/`foresight-graph-reader`, and others) into a unified schema consumed by frontends. Introspecting root Query types reveals `_service`/`_entities` fields in both BGS and graph-reader — representing a live Apollo Federation production deployment.
 
-**Backend — message queue/event-driven thật**: `foresight-cloud/platform/nats/`
-deploy NATS JetStream (Helm chart `nack` — NATS controller cho K8s CRD), và
-`foresight-cloud/platform/foresight-core/timescale-datapoint-provider/` có
-1 `Stream.yaml` CRD riêng — dữ liệu MQTT từ gateway vật lý đi qua NATS
-JetStream rồi mới ghi vào historian, decoupling ingest khỏi storage đúng
-kiểu message queue thật (không phải gọi hàm trực tiếp).
+**Backend — Event-Driven Architecture with Message Queues**: `foresight-cloud/platform/nats/` deploys NATS JetStream (via `nack` K8s CRD controllers), while `foresight-cloud/platform/foresight-core/timescale-datapoint-provider/` maintains a dedicated `Stream.yaml` CRD — MQTT data from physical IoT gateways streams through NATS JetStream before persisting into time-series historians, cleanly decoupling ingestion from storage.
 
-**Database sâu — historian thật là TimescaleDB, không phải Cassandra**:
-tài liệu cũ trong `doc/Platform Architecture and TechStack.md` ghi
-Cassandra, nhưng K8s manifest thật
-(`platform/foresight-core/timescale-datapoint-provider/base/timescale-datapoint-provider-db.HelmRelease.yaml`)
-cho thấy **TimescaleDB** (Postgres time-series extension) mới là lựa chọn
-thật đang chạy. Đây là bài học Level 4 quan trọng hơn cả chi tiết công nghệ:
-**luôn verify bằng infra-as-code thật, không tin tài liệu cũ** — tài liệu
-drift khỏi thực tế là chuyện bình thường ở hệ thống sống lâu.
+**Database Insights — Time-Series Historian Built on TimescaleDB**: Legacy platform architecture documentation (`doc/Platform Architecture and TechStack.md`) listed Cassandra, but production K8s manifests (`platform/foresight-core/timescale-datapoint-provider/base/timescale-datapoint-provider-db.HelmRelease.yaml`) confirm **TimescaleDB** (PostgreSQL time-series extension) is the active engine. This highlights a Senior lesson: **always verify architecture against declarative Infrastructure-as-Code manifests rather than relying on outdated static documentation** — documentation drift naturally occurs over long application lifecycles.
 
-**Observability — 3 chân đầy đủ, có bằng chứng**: `ServiceMonitor` CRD
-(Prometheus Operator) cho ít nhất 6 service riêng biệt
-(`federated-graph`, `graph-service`, `datapoint-resolver`, `blob-service`,
-`container-frontend`, `emqx-http-auth`), `PrometheusRule` alert thật cho
-FalkorDB backup (`falkordb-pit-backup`/`falkordb-dr-backup`), và
-`foresight-cloud/platform/monitoring/jaeger/` deploy Jaeger thật (distributed
-tracing) với Grafana datasource nối sẵn. Đây là bộ 3 (metrics/log/trace) đầy
-đủ hơn hẳn "chỉ có Prometheus" — hiếm thấy ở dự án nhỏ.
+**Observability — Comprehensive Metrics, Logs, and Distributed Tracing**: `ServiceMonitor` CRDs (Prometheus Operator) monitor at least 6 distinct microservices (`federated-graph`, `graph-service`, `datapoint-resolver`, `blob-service`, `container-frontend`, `emqx-http-auth`), `PrometheusRule` configurations track FalkorDB backup alerts (`falkordb-pit-backup`/`falkordb-dr-backup`), and `foresight-cloud/platform/monitoring/jaeger/` deploys Jaeger (distributed tracing) integrated with Grafana datasources.
 
-**DevOps — GitOps thật bằng FluxCD, không deploy tay**: `foresight-cloud`
-toàn bộ là Kustomize + FluxCD — mỗi service có `base/` + `overlays/{development,staging,production}`,
-image được update tự động qua `imagepolicy` annotation
-(`# {"$imagepolicy": "foresight-core:graph-service"}` — image-reflector-controller
-tự phát hiện tag mới, image-automation-controller tự commit vào Git, Flux
-tự apply) — không ai `kubectl apply` tay, mọi thay đổi hạ tầng đi qua Git PR.
-Đây là ví dụ GitOps thật, khác hẳn CI/CD "chạy script deploy" thông thường.
+**DevOps — Declarative GitOps via FluxCD**: `foresight-cloud` relies entirely on Kustomize + FluxCD — each service defines `base/` + `overlays/{development,staging,production}` environments. Container images update automatically via `imagepolicy` annotations (`# {"$imagepolicy": "foresight-core:graph-service"}` — `image-reflector-controller` detects new registry tags, `image-automation-controller` commits tag changes to Git, and Flux reconciles cluster state) — eliminating manual `kubectl apply` commands in favor of Git PR workflows.
 
-**Security — secrets qua Sealed Secrets, không phải biến môi trường tĩnh**:
-`platform/oauth2-proxy/base/oauth2-proxy.SealedSecret.yaml` — secret được
-**mã hoá ngay trong Git** (chỉ giải mã được bởi controller trong đúng
-cluster đó), khác hẳn `.env` thường hay thậm chí khác cả việc chỉ dùng
-`${VAR:?...}` fail-fast như `todo-app` đang làm — đây là câu trả lời thật
-cho "secrets management thật" mà `level-4-senior.md` yêu cầu, không cần
-Vault vẫn đạt được vì secret không tồn tại dạng plaintext ở bất kỳ đâu trong
-Git.
+**Security — Git-Encrypted Secrets via Sealed Secrets**: `platform/oauth2-proxy/base/oauth2-proxy.SealedSecret.yaml` — secrets are **encrypted directly within Git repositories** (decryptable solely by controller instances inside target clusters), contrasting with unencrypted `.env` files or basic environment variable defaults. This demonstrates production-grade secrets management without requiring external Vault clusters.
 
-**Security — SBOM scan trong CI, cao hơn cả SAST cơ bản**: `bitbucket-pipelines.yml`
-(vd `fs-b-backend`, `foresight-energy-v1`) có step `sbom-scan-deploy` chạy
-mỗi lần deploy + `nightly-audit` chạy `npm run audit:check` theo lịch (không
-chỉ khi commit) — SBOM (Software Bill of Materials) là mức trưởng thành cao
-hơn `npm audit` thông thường, dùng để trả lời nhanh "hệ thống có dùng package
-X phiên bản Y không" khi 1 CVE mới công bố, không cần grep từng repo.
+**Security — Automated SBOM Scanning in CI/CD**: `bitbucket-pipelines.yml` manifests (e.g., `fs-b-backend`, `foresight-energy-v1`) incorporate `sbom-scan-deploy` steps on deployment alongside scheduled `nightly-audit` executions running `npm run audit:check` — generating Software Bill of Materials (SBOM) artifacts to rapidly evaluate CVE vulnerability exposures across dependencies.
 
-**Gap thật đáng chú ý (dù là hệ thống production)**: search toàn bộ
-`foresight-cloud` cho `HorizontalPodAutoscaler` ra **0 kết quả** — nghĩa là
-dù `level-4-senior.md` liệt kê "auto-scaling dựa trên metric thật" là yêu
-cầu Senior DevOps, **hệ thống thật này chưa làm** (có thể vì traffic pattern
-building automation ổn định, không cần — hoặc đơn giản là chưa tới lượt ưu
-tiên). Bài học quan trọng: **hệ thống production thật không check hết mọi
-ô trong checklist "Senior" — biết cái nào bị bỏ qua CÓ CHỦ ĐÍCH vs bị bỏ
-qua vì chưa tới lượt mới là tư duy Senior thật**, không phải liệt kê đủ
-buzzword.
+**Real Production Architectural Gaps**: Searching `foresight-cloud` for `HorizontalPodAutoscaler` returns **0 results** — meaning despite Senior DevOps checklists requiring metric-based auto-scaling, **this live system has not implemented HPAs** (likely due to predictable building automation traffic patterns or competing operational priorities). Key lesson: **live production systems do not complete every theoretical Senior checklist item — distinguishing intentional tradeoffs vs unprioritized technical debt is the mark of a true Senior mindset.**
 
 ## Level 5 — Staff / Tech Lead
 
-**Bounded context thật, không phải vẽ sơ đồ**: platform tách rõ theo domain
-— `foresight-bgs` (nguồn sự thật của knowledge graph, Postgres), `graph-service`
-(read-cache tối ưu cho query, FalkorDB), historian riêng (TimescaleDB, chỉ
-lo timeseries), NATS (event backbone, không ai gọi thẳng service-to-service
-cho dữ liệu streaming) — đây là bounded context THẬT vì mỗi service có
-database riêng, ngôn ngữ riêng (C#/Go/Python), team sở hữu riêng (suy ra từ
-`bitbucket-pipelines.yml` khác nhau mỗi repo) — khác `pmp4-sim`'s 3-database
-demo ở chỗ đây có 32 repo thật đứng sau, không phải 1 schema.sql minh hoạ.
+**Real Domain Bounded Contexts**: The platform enforces clear domain boundaries — `foresight-bgs` (knowledge graph source of truth on PostgreSQL), `graph-service` (read-optimized query cache on FalkorDB), dedicated time-series historian (TimescaleDB handling telemetry streams), and NATS (event streaming backbone avoiding direct synchronous RPC calls for telemetry). Each domain maintains isolated databases, language stacks (C#/Go/Python), and independent team ownership (evidenced by distinct `bitbucket-pipelines.yml` configurations per repository).
 
-**RFC-worthy thật, tự phát hiện trong session trước**: khi cấu hình
-`NEW_APPLICATION_GRAPHQL_ENDPOINT` để BGS replicate sang graph-reader, đọc
-`foresight-bgs/API/README_REPLICATION.md` thấy dòng: *"If replication fails,
-the entire mutation fails and no data is written to the local database"* —
-đây là 1 quyết định CAP-theorem thật (chọn **consistency over availability**
-cho ghi dữ liệu): thà mutation fail hoàn toàn còn hơn 2 nguồn dữ liệu
-(BGS/graph-reader) lệch nhau. Câu hỏi RFC thật rút ra được: *"Nếu
-graph-service down 10 phút, mọi ghi dữ liệu vào BGS (kể cả không liên quan
-gì tới graph-service) có nên fail theo không? Đánh đổi giữa consistency và
-availability ở đây có đúng cho mọi loại mutation không, hay nên phân loại
-theo mức độ quan trọng?"* — đúng dạng câu hỏi "hệ thống vỡ ở đâu trước" mà
-`level-5-staff-lead.md` yêu cầu, lấy từ hành vi thật quan sát được, không
-phải giả định.
+**Authentic RFC Tradeoff Scenarios**: Configuring `NEW_APPLICATION_GRAPHQL_ENDPOINT` for BGS replication to graph-reader revealed this constraint in `foresight-bgs/API/README_REPLICATION.md`: *"If replication fails, the entire mutation fails and no data is written to the local database"* — illustrating a CAP-theorem decision (prioritizing **consistency over availability** for write operations) to prevent data drift between BGS and graph-reader. RFC Question: *"If graph-service experiences a 10-minute outage, should all write mutations to BGS (even those unrelated to graph-service queries) fail synchronously? Is enforcing strict consistency appropriate for all mutation types, or should consistency constraints be tiered by domain criticality?"*
 
-**Technical debt thật, có thể lượng hoá**: `foresight-cloud-bms` (app BMS
-mới) sau khi diff trực tiếp với template gốc `bms/` cho thấy **gần như giống
-hệt nhau** — chưa có route/feature nào là sản phẩm thật, trong khi
-`foresight-facilities-v1`/`foresight-energy-v1` (stack cũ) đã đầy đủ tính
-năng production. Đây là ví dụ thật cho "frontend migration debt" — 2 stack
-(cũ: TanStack Router SPA + `@piscada/foresight-shadcn-components`; mới:
-TanStack Start SSR + `@piscada/foresight-components`) chạy song song, và
-BMS — lẽ ra là app đại diện cho stack mới — lại là nơi ít tiến độ nhất.
-Câu hỏi Staff thật: *"Ưu tiên hoàn thiện `foresight-cloud-bms` (chứng minh
-stack mới) hay tiếp tục feature trên stack cũ đã có khách hàng thật dùng
-(`foresight-facilities-v1`)? Impact vs effort ở đây tính thế nào khi công ty
-đang gọi vốn dựa trên câu chuyện 'AI-first platform'?"*
+**Quantifiable Technical Debt**: Diffing `foresight-cloud-bms` (new BMS app) against base templates reveals **near-identical scaffolding** — lacking production features, while legacy applications (`foresight-facilities-v1`/`foresight-energy-v1`) actively serve live enterprise traffic. This illustrates frontend migration debt: running dual stacks (legacy: TanStack Router SPA + `@piscada/foresight-shadcn-components`; modern: TanStack Start SSR + `@piscada/foresight-components`) concurrently. Staff Question: *"Should engineering prioritize completing `foresight-cloud-bms` (validating the new stack) or continue shipping features on legacy production stacks serving revenue-generating clients (`foresight-facilities-v1`)? How is impact vs effort evaluated when company fundraising relies on an AI-first platform narrative?"*
 
 ## Level 6 — Principal / Consultant
 
-Phần này **đã thực hành thật** trong các lượt hội thoại trước của chính
-phiên làm việc này (không phải giả định) — dùng chính output đó làm ví dụ:
+This section leverages authentic consulting artifacts executed during prior analysis sessions:
 
-- **Technical due diligence thật**: đã đọc bộ deck gọi vốn Series A $8M thật
-  của Piscada (`piscada-export (2).pdf`) và đối chiếu với code thật, phát
-  hiện: 3 khách hàng dẫn chứng trong deck là **ẩn danh** ("Major Nordic
-  Property Manager"...) trong khi chỉ 1 khách hàng (Olav Thon Eiendom) có
-  tên thật + hợp đồng — dấu hiệu cần hỏi thêm khi due diligence thật; và
-  công ty vừa **bán mảng aquaculture** (22M NOK, có lãi) tháng 3/2025 để dồn
-  lực vào PropTech — vừa là tín hiệu tốt (kỷ luật vốn) vừa là rủi ro (pivot
-  gần đây, chưa chứng minh dài hạn).
-- **Build vs Buy thật, quan sát được từ code**: Piscada **không tự xây
-  identity** — dùng Keycloak (open-source, self-host) + oauth2-proxy thay vì
-  tự viết JWT/session như `todo-app` đang làm — quyết định build-vs-buy đúng
-  đắn vì identity không phải core differentiator của họ. Ngược lại, họ
-  **tự xây** semantic builder/AI classifier (core moat, không có SaaS nào
-  làm đúng bài toán này) — ví dụ thật cho nguyên tắc "buy commodity, build
-  differentiator".
-- **Vendor lock-in thật, đáng đưa vào risk register**: `foresight-classifier`
-  và `building-analytics-engine` đều phụ thuộc trực tiếp Anthropic Claude
-  API (`claude-sonnet-4-6`/`claude-opus-4-6` hardcode trong config) — không
-  có abstraction layer nào để đổi LLM provider. Nếu Anthropic đổi giá/ngừng
-  model, ảnh hưởng trực tiếp core product. Đây là dòng thật nên có trong
-  risk register (xác suất thấp, ảnh hưởng cao).
-- **Bus-factor/dependency risk thật, tự phát hiện khi cố chạy `graph-reader` local**:
-  service này phụ thuộc module Go riêng tư
-  `bitbucket.org/teampiscadacloud/foresight-go-middleware` — không nằm
-  trong bất kỳ 32 repo nào được checkout, không có cách nào build được nếu
-  không có quyền truy cập Bitbucket nội bộ của Piscada. Về mặt due diligence
-  hạ tầng: **1 thành phần lõi của kiến trúc phụ thuộc hoàn toàn vào quyền
-  truy cập nội bộ team, không self-contained** — câu hỏi đáng hỏi CTO khi
-  due diligence: "nếu người giữ quyền truy cập Bitbucket đó nghỉ việc/mất
-  quyền, ai build lại được `graph-reader` từ đầu?"
+- **Technical Due Diligence in Practice**: Analyzing Piscada's Series A $8M pitch deck (`piscada-export (2).pdf`) against live code repositories revealed: 3 case study clients in pitch decks were **anonymized** ("Major Nordic Property Manager") with only 1 client (Olav Thon Eiendom) named with contractual proof — highlighting key due diligence inquiry points; additionally, the company **divested its aquaculture division** (22M NOK, profitable) in March 2025 to focus resources on PropTech — signaling capital discipline alongside recent strategic pivot risks.
+- **Build vs Buy in Practice**: Piscada **does not develop custom identity providers** — leveraging Keycloak (open-source self-hosted) + `oauth2-proxy` rather than hand-coding JWT/session layers as in `todo-app` — choosing to buy/adopt commodity infrastructure where identity is not a core differentiator. Conversely, they **built proprietary** semantic builders and AI classifiers (core moat without off-the-shelf SaaS equivalents) — demonstrating the principle: "buy commodity infrastructure, build core differentiators."
+- **Vendor Lock-in Risk Registers**: `foresight-classifier` and `building-analytics-engine` maintain direct dependencies on Anthropic Claude APIs (`claude-sonnet-4-6`/`claude-opus-4-6` hardcoded in configs) without LLM provider abstraction layers. Pricing adjustments or model deprecations by Anthropic directly impact core product offerings — a risk item for inclusion in risk registers (low probability, high impact).
+- **Bus-Factor & Dependency Risks**: Investigating `graph-reader` local execution dependencies revealed a private Go module dependency `bitbucket.org/teampiscadacloud/foresight-go-middleware` — uncontained within any of the 32 checked-out repositories and unbuildable without Bitbucket access credentials. Infrastructure due diligence finding: **a core architectural component relies strictly on private internal repository access rather than self-contained builds** — raising key CTO due diligence questions: "If access to that private Bitbucket repository is revoked or lost, can `graph-reader` be built independently from source?"
 
-## Cách dùng file này
+## How to Use This Document
 
-Không có mục "Còn thiếu, làm tiếp" như `pmp4-sim-gap-analysis.md` — vì đây
-không phải dự án của bạn để sửa. Dùng file này theo 2 cách:
+This document contains no "Gaps Remaining" checklist like `gap-analysis.md` — as this is not your codebase to edit. Use this document in two ways:
 
-1. Khi đọc "Yêu cầu"/"Keywords" ở file `level-N-*.md`, quay lại đúng mục
-   tương ứng ở đây để xem **ví dụ thật, ở quy mô công ty thật**, thay vì chỉ
-   tưởng tượng qua lý thuyết.
-2. Khi tự luyện artifact cấp Senior/Staff/Consultant (ADR, RFC, due
-   diligence), **lấy chính các câu hỏi RFC/risk-register đã liệt kê ở trên
-   làm đề bài thật** để tự viết ra artifact hoàn chỉnh (1 trang, có
-   trade-off rõ ràng) — đây mới là bài tập, không phải việc đọc file này là
-   xong.
+1. When reading "Requirements" / "Keywords" in `level-N-*.md` files, reference corresponding sections here to examine **real production implementations at enterprise scale**, rather than abstract theoretical definitions.
+2. When practicing Senior/Staff/Consultant artifacts (ADRs, RFCs, due diligence reports), **use the RFC questions and risk register scenarios detailed above as real prompt assignments** to author complete 1-page decision documents with explicit tradeoff evaluations.

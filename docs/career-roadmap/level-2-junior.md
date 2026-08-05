@@ -1,96 +1,56 @@
 # Level 2 — Junior
 
-> Tự trả lời từng gạch đầu dòng trước khi xem [đáp án/giải thích chi tiết](level-2-junior-answers.md).
+> Self-answer each bullet point before viewing the [answers/detailed explanation](level-2-junior-answers.md).
 
 ## Frontend
 
-**Yêu cầu**
-- Hiểu đúng dependency array của `useEffect`, tránh infinite loop / stale
-  closure.
-- Tách component con hợp lý (reusability), truyền props có kiểu
-  (TypeScript interface/props typing).
-- Quản lý form: controlled input, validate cơ bản (bắt buộc, độ dài).
-- CSS framework (Tailwind) và responsive design cơ bản (mobile-first).
-- Biết dùng `useMemo`/`useCallback` (chưa cần biết khi nào KHÔNG nên dùng).
+**Requirements**
+- Properly understanding the `useEffect` dependency array, avoiding infinite loops and stale closures.
+- Logical child component decomposition (reusability), passing typed props (TypeScript interfaces / prop typing).
+- Form management: controlled inputs, basic validation (required fields, maximum length).
+- CSS framework (Tailwind) and basic responsive design (mobile-first approach).
+- Basic usage of `useMemo`/`useCallback` (deep understanding of when NOT to use them not required yet).
 
-**Keywords**: custom hook, prop drilling, controlled/uncontrolled input,
-Tailwind utility classes, TypeScript interface, `key` prop trong list
-rendering, error boundary (biết khái niệm).
+**Keywords**: custom hook, prop drilling, controlled/uncontrolled input, Tailwind utility classes, TypeScript interface, `key` prop in list rendering, error boundary (conceptual understanding).
 
-**Áp dụng vào `todo-app`**: [`fe-vite/src/App.tsx`](../../fe-vite/src/App.tsx)
-và [`fe-nextjs`](../../fe-nextjs/src/app) dùng TypeScript + Tailwind, có toggle
-chọn backend — đọc phần code xử lý switch backend (ping kiểm tra trạng thái
-kết nối) là ví dụ tốt về side-effect với `useEffect`. **Còn thiếu ở mức
-Junior**: tách `TodoItem`, `TodoList`, `AddTodoForm` thành các component
-riêng thay vì để chung trong `App.tsx` — đây là bài tập refactor tốt để tự
-luyện.
+**Application in `todo-app`**: [`fe-vite/src/App.tsx`](../../fe-vite/src/App.tsx) and [`fe-nextjs`](../../fe-nextjs/src/app) use TypeScript + Tailwind and feature a backend switcher toggle — reading the code that switches backends (pinging connection status) is a great example of managing side-effects with `useEffect`. **Missing at the Junior level**: extracting `TodoItem`, `TodoList`, and `AddTodoForm` into separate standalone components rather than leaving them in `App.tsx` — this serves as a good refactoring exercise for practice.
 
 ## Backend
 
-**Yêu cầu**
-- Tách được kiến trúc cơ bản: routes → controller → (có thể chưa cần
-  service/repository riêng).
-- Validate input bằng thư viện (`zod`/`joi`), không chỉ `if (!title)`.
-- Middleware xử lý lỗi tập trung thay vì `try/catch` lặp lại từng route.
-- Hiểu và làm được authentication cơ bản: hash password (`bcrypt`), JWT
-  sign/verify đơn giản (chưa cần refresh token rotation).
-- SQL: `JOIN` cơ bản, biết Foreign Key, biết `INDEX` là gì (chưa cần tối ưu
-  sâu).
+**Requirements**
+- Separating basic architecture: routes → controller → (standalone service/repository layers not strictly required yet).
+- Input validation using libraries (`zod`/`joi`) rather than manual `if (!title)` checks.
+- Centralized error handling middleware instead of repeating `try/catch` in every route handler.
+- Understanding and implementing basic authentication: password hashing (`bcrypt`), basic JWT signing/verification (refresh token rotation not required yet).
+- SQL: basic `JOIN` operations, understanding Foreign Keys, understanding what an `INDEX` is (deep optimization not required yet).
 
-**Keywords**: middleware, `bcrypt`, JWT (access token), request validation
-schema, foreign key, `ON DELETE CASCADE`, parameterized query (chống SQL
-injection).
+**Keywords**: middleware, `bcrypt`, JWT (access token), request validation schema, foreign key, `ON DELETE CASCADE`, parameterized query (preventing SQL injection).
 
-**Áp dụng vào `todo-app`**: `be-node-express` sau khi refactor đã VƯỢT mức
-này — có tách layer đầy đủ, JWT, zod validation. Để tự luyện đúng "cảm giác"
-Level 2, thử tự viết lại **một tính năng nhỏ từ đầu, không xem code có sẵn**:
-ví dụ thêm field `priority` (`low/medium/high`) vào `todos`, viết migration
-SQL, cập nhật `todo.repository.ts`, `todo.service.ts`, `todo.schema.ts`,
-route `PATCH`. Nếu tự làm được trong &lt;30 phút không lỗi TypeScript, bạn
-đã chắc Level 2 BE.
+**Application in `todo-app`**: `be-node-express` post-refactor EXCEEDS this level — it features full layer separation, JWT, and Zod validation. To get a true Level 2 hands-on feel, try rewriting **a small feature from scratch without referencing existing code**: for example, adding a `priority` field (`low/medium/high`) to `todos`, writing the SQL migration, and updating `todo.repository.ts`, `todo.service.ts`, `todo.schema.ts`, and the `PATCH` route. If you can complete this in <30 minutes without TypeScript errors, you have solidly mastered Level 2 BE.
 
 ## DevOps
 
-**Yêu cầu**
-- Tự viết được 1 `Dockerfile` đơn giản cho 1 service Node.js (1 stage,
-  `COPY` + `RUN npm install` + `CMD`).
-- Viết được `docker-compose.yml` cho vài service phụ thuộc nhau
-  (`depends_on`), hiểu `networks`/`volumes` ở mức dùng được.
-- Đọc hiểu 1 CI pipeline YAML đơn giản (GitHub Actions): trigger khi nào,
-  step nào chạy trước/sau.
+**Requirements**
+- Ability to write a simple single-stage `Dockerfile` for a Node.js service (`COPY` + `RUN npm install` + `CMD`).
+- Writing a `docker-compose.yml` for multiple dependent services (`depends_on`), understanding `networks`/`volumes` at an operational level.
+- Reading and understanding a basic YAML CI pipeline (GitHub Actions): trigger conditions, step execution order.
 
-**Keywords**: `depends_on`, named volume, bridge network, CI trigger
-(`push`/`pull_request`), `actions/checkout`, `actions/setup-node`.
+**Keywords**: `depends_on`, named volume, bridge network, CI trigger (`push`/`pull_request`), `actions/checkout`, `actions/setup-node`.
 
-**Áp dụng vào `todo-app`**: đọc và giải thích lại được toàn bộ
-[`docker-compose.yml`](../../docker-compose.yml) và
-[`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) — vì sao mỗi
-service có 1 job riêng với `paths-filter` (chỉ build khi thư mục đó thay
-đổi) là ví dụ tốt về CI hiệu quả cho monorepo.
+**Application in `todo-app`**: Read and explain the entirety of [`docker-compose.yml`](../../docker-compose.yml) and [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) — understanding why each service has its own job with `paths-filter` (only building when that directory changes) is a great example of effective monorepo CI.
 
 ## Security
 
-**Yêu cầu**
-- Hash password đúng cách (`bcrypt`/`argon2`, biết salt rounds là gì).
-- Luôn dùng parameterized query, giải thích được SQL injection xảy ra như
-  thế nào nếu nối chuỗi trực tiếp.
-- Cấu hình CORS đúng (không để `origin: '*'` khi cần `credentials: true`).
-- Biết XSS là gì và vì sao React tự escape output giúp giảm rủi ro này.
+**Requirements**
+- Properly hashing passwords (`bcrypt`/`argon2`, understanding salt rounds).
+- Always using parameterized queries, explaining how SQL injection occurs when concatenating strings directly.
+- Configuring CORS properly (never setting `origin: '*'` when `credentials: true` is required).
+- Understanding what XSS is and why React automatically escapes output to mitigate this risk.
 
-**Keywords**: `bcrypt` salt rounds, parameterized query, CORS `origin` vs
-`credentials`, XSS, output escaping.
+**Keywords**: `bcrypt` salt rounds, parameterized query, CORS `origin` vs `credentials`, XSS, output escaping.
 
-**Áp dụng vào `todo-app`**: [`src/utils/password.ts`](../../be-node-express/src/utils/password.ts)
-dùng `bcrypt` với 12 salt rounds; mọi query trong
-[`src/repositories/`](../../be-node-express/src/repositories) dùng `$1, $2`
-thay vì nối chuỗi. Điểm đáng chú ý: `todo.repository.ts` là nơi DUY NHẤT có
-nối chuỗi trực tiếp vào SQL (`sortBy`/`sortDir` cho `ORDER BY`) — đọc
-`todo.service.ts` để thấy vì sao việc validate qua whitelist
-(`SORTABLE_COLUMNS`) trước khi tới đó là bắt buộc, không phải tùy chọn.
+**Application in `todo-app`**: [`src/utils/password.ts`](../../be-node-express/src/utils/password.ts) uses `bcrypt` with 12 salt rounds; all queries in [`src/repositories/`](../../be-node-express/src/repositories) use `$1, $2` parameters instead of string concatenation. Key detail: `todo.repository.ts` is the ONLY place with direct string concatenation in SQL (`sortBy`/`sortDir` for `ORDER BY`) — read `todo.service.ts` to see why validating input against a strict whitelist (`SORTABLE_COLUMNS`) before reaching the repository is mandatory, not optional.
 
-## Cách tự kiểm tra đã qua Level 2
+## How to Self-Check Level 2 Mastery
 
-Bạn giải thích được: vì sao phải hash password thay vì mã hoá 2 chiều, JWT
-gồm 3 phần gì và ai verify được, `JOIN` khác `subquery` ra sao, tự debug
-được lỗi CORS cơ bản khi FE gọi BE khác port, và tự viết được 1
-`docker-compose.yml` cho 2 service phụ thuộc nhau từ đầu.
+You can explain: why passwords must be hashed rather than 2-way encrypted, what 3 parts constitute a JWT and who verifies it, how `JOIN` differs from a subquery, how to debug basic CORS errors when FE calls a BE on a different port, and how to write a `docker-compose.yml` for 2 dependent services from scratch.
