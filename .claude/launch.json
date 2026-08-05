@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fe-vite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "fe-vite"],
+      "port": 5173
+    },
+    {
+      "name": "fe-nextjs",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "fe-nextjs"],
+      "port": 3000
+    }
+  ]
+}

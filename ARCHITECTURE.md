@@ -61,21 +61,16 @@ todo-app/
 - **Port**: `5432`
 - **Database Name**: `todo_db`
 - **Credentials**: `postgres` / `postgres`
-- **Schema Table**:
-  ```sql
-  CREATE TABLE IF NOT EXISTS todos (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    completed BOOLEAN DEFAULT FALSE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-  );
-  ```
+- **Schema**: `users`, `categories`, `todos` (FK to both), `refresh_tokens`
+  (JWT rotation), and `session` (server-side session store). Full DDL and
+  indexes in [`db/init.sql`](db/init.sql).
 
 ---
 
 ## 🔌 API Interface Specifications
 
-Tất cả 3 Backends triển khai cùng một bộ chuẩn RESTful API đồng nhất:
+`be-nestjs` và `be-fastapi` vẫn triển khai bộ API đơn giản, không auth dưới đây
+(và các frontend `fe-vite`/`fe-nextjs` vẫn gọi trực tiếp theo interface này):
 
 | Method | Endpoint | Mô tả | Request Body | Response Format |
 | :--- | :--- | :--- | :--- | :--- |
@@ -84,15 +79,29 @@ Tất cả 3 Backends triển khai cùng một bộ chuẩn RESTful API đồng 
 | **PATCH** | `/api/todos/:id` | Cập nhật tên hoặc trạng thái của todo | `{ "title"?: "string", "completed"?: boolean }` | `Todo` |
 | **DELETE** | `/api/todos/:id` | Xóa một todo theo ID | None | `{ "message": "string", "todo": Todo }` |
 
+⚠️ **`be-node-express` đã tách khỏi interface chung này.** `/api/todos` giờ
+yêu cầu JWT (`Authorization: Bearer`), có thêm `/api/session-todos` (session
+cookie), `/api/auth/*`, `/api/session-auth/*`, `/api/categories`, và
+`/api/todos/stats`. Nếu chọn `be-node-express` trên UI của `fe-vite`/
+`fe-nextjs` mà chưa đăng nhập, các request tới `/api/todos` sẽ trả về `401`
+— hai frontend này chưa có màn hình login nên chưa gọi được backend này qua
+UI. Xem [`be-node-express/GUIDE.md`](be-node-express/GUIDE.md) để test qua
+`curl`.
+
 ---
 
 ## ⚙️ So sánh Chi tiết Các Backend Implementation
 
 ### 1. `be-node-express` (Node.js + Express + TypeScript)
 - **Cổng**: `5001`
-- **Mô hình**: Functional / Scripting-based HTTP server với `express`.
-- **Quản lý DB**: Trực tiếp qua `pg` pool (`new Pool()`).
-- **Ưu điểm**: Nhẹ nhất, ít overhead, dễ đọc, khởi động cực nhanh.
+- **Mô hình**: Layered architecture (routes → controllers → services →
+  repositories), `pg` pool qua `config/db.ts`.
+- **Auth**: JWT (access + rotating refresh tokens) và session-based
+  (express-session + connect-pg-simple) chạy song song trên cùng bộ CRUD, để
+  so sánh trực tiếp hai pattern. Chi tiết: [`be-node-express/GUIDE.md`](be-node-express/GUIDE.md).
+- **Ưu điểm**: Gần nhất với một production REST API thực tế — validation
+  (zod), rate limiting, ownership checks, pagination/filtering/sorting, và
+  một analytical query (JOIN + GROUP BY) cho `/api/todos/stats`.
 
 ### 2. `be-nestjs` (NestJS Framework)
 - **Cổng**: `5003`

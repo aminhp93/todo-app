@@ -27,6 +27,12 @@ services:
       NODE_ENV: production
       PORT: 5001
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_pass}@db:5432/${POSTGRES_DB:-todo_db}}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET must be set in production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET must be set in production}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set in production}
+      SESSION_TTL_MS: ${SESSION_TTL_MS:-86400000}
     depends_on:
       - db
     networks:

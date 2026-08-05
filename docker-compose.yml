@@ -26,6 +26,12 @@ services:
     environment:
       PORT: 5001
       DATABASE_URL: postgresql://postgres:postgres@db:5432/todo_db
+      JWT_ACCESS_SECRET: dev-access-secret-change-me
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-me
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL_DAYS: 7
+      SESSION_SECRET: dev-session-secret-change-me
+      SESSION_TTL_MS: 86400000
     depends_on:
       - db
     networks:
