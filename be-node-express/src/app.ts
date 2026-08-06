@@ -1,17 +1,22 @@
-import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
-import { sessionMiddleware } from './config/session';
-import routes from './routes';
-import { typeDefs } from './graphql/schema';
-import { resolvers } from './graphql/resolvers';
-import { buildContext } from './graphql/context';
-import { errorHandler } from './middleware/errorHandler';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@apollo/server/express4";
+import { sessionMiddleware } from "./config/session";
+import routes from "./routes";
+import { typeDefs } from "./graphql/schema";
+import { resolvers } from "./graphql/resolvers";
+import { buildContext } from "./graphql/context";
+import { errorHandler } from "./middleware/errorHandler";
 
 export async function buildApp() {
   const app = express();
+
+  // Security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options etc.
+  // Disabled contentSecurityPolicy for GraphQL playground compatibility.
+  app.use(helmet({ contentSecurityPolicy: false }));
 
   // credentials: true + reflected origin is required for the session-cookie
   // demo (session-auth/todos-session) to work from a browser frontend on a
@@ -21,13 +26,16 @@ export async function buildApp() {
   app.use(cookieParser());
   app.use(sessionMiddleware);
 
-  app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
-  app.use('/api', routes);
+  app.use("/api", routes);
 
   const apolloServer = new ApolloServer({ typeDefs, resolvers });
   await apolloServer.start();
-  app.use('/graphql', expressMiddleware(apolloServer, { context: buildContext }));
+  app.use(
+    "/graphql",
+    expressMiddleware(apolloServer, { context: buildContext }),
+  );
 
   // Must be registered after all routes so thrown/rejected errors reach it.
   app.use(errorHandler);

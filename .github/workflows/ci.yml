@@ -2,9 +2,9 @@ name: Monorepo CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   # 1. Backend NestJS
@@ -63,12 +63,33 @@ jobs:
         with:
           node-version: 18
 
+      - name: Cache node_modules
+        if: steps.filter.outputs.express == 'true'
+        uses: actions/cache@v4
+        with:
+          path: be-node-express/node_modules
+          key: ${{ runner.os }}-be-node-express-${{ hashFiles('be-node-express/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-be-node-express-
+
       - name: Install dependencies & Build
         if: steps.filter.outputs.express == 'true'
         run: |
           cd be-node-express
           npm install
+          npm run lint
           npm run build
+
+      - name: Run tests
+        if: steps.filter.outputs.express == 'true'
+        run: |
+          cd be-node-express
+          npm test
+
+      - name: Dependency audit
+        if: steps.filter.outputs.express == 'true'
+        run: |
+          cd be-node-express
+          npm audit --audit-level=high || true
 
       - name: Test Docker Build
         if: steps.filter.outputs.express == 'true'
@@ -95,7 +116,7 @@ jobs:
         if: steps.filter.outputs.fastapi == 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
       - name: Install dependencies & Validate Syntax
         if: steps.filter.outputs.fastapi == 'true'
@@ -160,6 +181,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+
+      - name: Cache node_modules
+        if: steps.filter.outputs.vite == 'true'
+        uses: actions/cache@v4
+        with:
+          path: fe-vite/node_modules
+          key: ${{ runner.os }}-fe-vite-${{ hashFiles('fe-vite/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-fe-vite-
 
       - name: Install dependencies & Build
         if: steps.filter.outputs.vite == 'true'
